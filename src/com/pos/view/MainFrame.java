@@ -1,21 +1,30 @@
 package com.pos.view;
 
+import com.pos.model.Item;
+import com.pos.model.SalesDetail;
+import com.pos.util.DataManager;
 import com.pos.util.GradientButton;
+import com.pos.util.SalesManager;
 import com.pos.util.SolidButton;
 import com.pos.util.Style;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.*;
+import java.util.List;
 
 public class MainFrame extends JFrame {
+    private JLabel lblTotalTransactions;
+    private JLabel lblTotalProfit;
+    private JTextArea txtTopProducts;
 
     public MainFrame() {
         setTitle("Aplikasi Kasir Sederhana");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
+        setSize(1000, 700); // Increased width for stats
         setLocationRelativeTo(null);
         getContentPane().setBackground(Color.WHITE);
         setLayout(new BorderLayout());
@@ -59,6 +68,21 @@ public class MainFrame extends JFrame {
 
         add(headerPanel, BorderLayout.NORTH);
 
+        // Center Panel (Stats + Menu)
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.setBackground(Color.WHITE);
+
+        // Stats Panel
+        JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
+        statsPanel.setBackground(Color.WHITE);
+        statsPanel.setBorder(new EmptyBorder(10, 50, 10, 50));
+
+        statsPanel.add(createStatCard("Total Transaksi", "lblTotalTransactions"));
+        statsPanel.add(createStatCard("Total Keuntungan", "lblTotalProfit"));
+        statsPanel.add(createTopProductsCard());
+
+        centerPanel.add(statsPanel, BorderLayout.NORTH);
+
         // Menu Grid
         JPanel menuPanel = new JPanel(new GridLayout(2, 2, 20, 20));
         menuPanel.setBackground(Color.WHITE);
@@ -80,7 +104,9 @@ public class MainFrame extends JFrame {
         menuPanel.add(btnReport);
         menuPanel.add(btnSettings);
 
-        add(menuPanel, BorderLayout.CENTER);
+        centerPanel.add(menuPanel, BorderLayout.CENTER);
+
+        add(centerPanel, BorderLayout.CENTER);
 
         // Footer
         JPanel footerPanel = new JPanel();
@@ -93,6 +119,106 @@ public class MainFrame extends JFrame {
 
         footerPanel.add(btnExit);
         add(footerPanel, BorderLayout.SOUTH);
+
+        refreshStats();
+    }
+
+    private JPanel createStatCard(String title, String labelName) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(new Color(240, 248, 255)); // Light Alice Blue
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(15, 15, 15, 15)));
+
+        JLabel lblTitle = new JLabel(title);
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitle.setForeground(Color.GRAY);
+
+        JLabel lblValue = new JLabel("0");
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblValue.setForeground(Style.PRIMARY_COLOR);
+
+        if (labelName.equals("lblTotalTransactions"))
+            lblTotalTransactions = lblValue;
+        if (labelName.equals("lblTotalProfit"))
+            lblTotalProfit = lblValue;
+
+        card.add(lblTitle, BorderLayout.NORTH);
+        card.add(lblValue, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private JPanel createTopProductsCard() {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(new Color(255, 250, 240)); // Floral White
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                new EmptyBorder(15, 15, 15, 15)));
+
+        JLabel lblTitle = new JLabel("Produk Terlaris");
+        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblTitle.setForeground(Color.GRAY);
+
+        txtTopProducts = new JTextArea();
+        txtTopProducts.setEditable(false);
+        txtTopProducts.setOpaque(false);
+        txtTopProducts.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        txtTopProducts.setLineWrap(true);
+
+        card.add(lblTitle, BorderLayout.NORTH);
+        card.add(txtTopProducts, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    @Override
+    public void setVisible(boolean b) {
+        if (b)
+            refreshStats();
+        super.setVisible(b);
+    }
+
+    private void refreshStats() {
+        List<SalesDetail> details = SalesManager.getAllSalesDetails();
+
+        // 1. Total Transactions
+        long totalTrans = SalesManager.getSalesHistory().size(); // Use history for transaction count integrity
+        lblTotalTransactions.setText(String.valueOf(totalTrans));
+
+        // 2. Total Profit
+        double totalProfit = 0;
+        for (SalesDetail d : details) {
+            double profitPerItem = (d.getSellingPrice() - d.getPurchasePrice()) * d.getQuantity();
+            totalProfit += profitPerItem;
+        }
+        lblTotalProfit.setText("Rp " + NumberFormat.getNumberInstance(Locale.US).format(totalProfit));
+
+        // 3. Most Sold Products
+        Map<String, Integer> productSales = new HashMap<>();
+        for (SalesDetail d : details) {
+            productSales.put(d.getItemCode(), productSales.getOrDefault(d.getItemCode(), 0) + d.getQuantity());
+        }
+
+        // Sort by value descending
+        List<Map.Entry<String, Integer>> sortedSales = new ArrayList<>(productSales.entrySet());
+        sortedSales.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue()));
+
+        StringBuilder top = new StringBuilder();
+        int count = 0;
+        for (Map.Entry<String, Integer> entry : sortedSales) {
+            if (count >= 3)
+                break;
+            Item item = DataManager.getItemByCode(entry.getKey());
+            String name = (item != null) ? item.getName() : entry.getKey();
+            top.append((count + 1) + ". " + name + " (" + entry.getValue() + ")\n");
+            count++;
+        }
+
+        if (top.length() == 0)
+            txtTopProducts.setText("Belum ada data");
+        else
+            txtTopProducts.setText(top.toString());
     }
 
     private GradientButton createMenuButton(String text, String icon) {

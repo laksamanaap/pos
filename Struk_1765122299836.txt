@@ -3,19 +3,19 @@
            Malang, Jawa Timur 65144
              Telp: (0341) 123-4567
 ------------------------------------------------
-No. Transaksi: TRX-1764726146686
-Tanggal      : 03 December 2025 08:42:26
+No. Transaksi: TRX-1765122297689
+Tanggal      : 07 December 2025 22:44:57
 Kasir        : Admin
 ------------------------------------------------
 Nama Barang        Qty   Harga      Subtotal  
 
-Teh Botol Sosro    3     5,500      16,500    
+Biskuit Roma Kelap 2     6,000      12,000    
 ------------------------------------------------
-Total Item:       1 Item (3 Pcs)
+Total Item:       1 Item (2 Pcs)
 
-TOTAL:            Rp 16,500
-Bayar:            Rp 20,000
-Kembalian:        Rp 3,500
+TOTAL:            Rp 12,000
+Bayar:            Rp 15,000
+Kembalian:        Rp 3,000
 ------------------------------------------------
  Barang yang sudah dibeli tidak dapat ditukar/dikembalikan
    Simpan struk ini sebagai bukti pembayaran yang sah

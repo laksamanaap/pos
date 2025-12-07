@@ -3,13 +3,15 @@ package com.pos.model;
 public class Item {
     private String code;
     private String name;
-    private double price;
+    private double purchasePrice;
+    private double sellingPrice;
     private int stock;
 
-    public Item(String code, String name, double price, int stock) {
+    public Item(String code, String name, double purchasePrice, double sellingPrice, int stock) {
         this.code = code;
         this.name = name;
-        this.price = price;
+        this.purchasePrice = purchasePrice;
+        this.sellingPrice = sellingPrice;
         this.stock = stock;
     }
 
@@ -29,12 +31,20 @@ public class Item {
         this.name = name;
     }
 
-    public double getPrice() {
-        return price;
+    public double getPurchasePrice() {
+        return purchasePrice;
     }
 
-    public void setPrice(double price) {
-        this.price = price;
+    public void setPurchasePrice(double purchasePrice) {
+        this.purchasePrice = purchasePrice;
+    }
+
+    public double getSellingPrice() {
+        return sellingPrice;
+    }
+
+    public void setSellingPrice(double sellingPrice) {
+        this.sellingPrice = sellingPrice;
     }
 
     public int getStock() {

@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class ItemDataFrame extends JFrame {
     private MainFrame mainFrame;
-    private JTextField txtCode, txtName, txtPrice, txtStock, txtSearch;
+    private JTextField txtCode, txtName, txtPurchasePrice, txtSellingPrice, txtStock, txtSearch;
     private JTable table;
     private DefaultTableModel tableModel;
 
@@ -25,7 +25,7 @@ public class ItemDataFrame extends JFrame {
         this.mainFrame = mainFrame;
         setTitle("Manajemen Data Barang");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 700);
+        setSize(900, 750);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
@@ -75,15 +75,25 @@ public class ItemDataFrame extends JFrame {
         // Row 2
         gbc.gridx = 0;
         gbc.gridy = 2;
-        formPanel.add(new JLabel("Harga Satuan (Rp)"), gbc);
+        formPanel.add(new JLabel("Harga Beli (Rp)"), gbc);
         gbc.gridx = 1;
-        formPanel.add(new JLabel("Stok"), gbc);
+        formPanel.add(new JLabel("Harga Jual (Rp)"), gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        txtPrice = new JTextField(15);
-        formPanel.add(txtPrice, gbc);
+        txtPurchasePrice = new JTextField(15);
+        formPanel.add(txtPurchasePrice, gbc);
         gbc.gridx = 1;
+        txtSellingPrice = new JTextField(15);
+        formPanel.add(txtSellingPrice, gbc);
+
+        // Row 3
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        formPanel.add(new JLabel("Stok"), gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 5;
         txtStock = new JTextField(20);
         formPanel.add(txtStock, gbc);
 
@@ -102,7 +112,7 @@ public class ItemDataFrame extends JFrame {
         buttonPanel.add(btnReset);
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         formPanel.add(buttonPanel, gbc);
 
@@ -125,7 +135,7 @@ public class ItemDataFrame extends JFrame {
         contentPanel.add(Box.createVerticalStrut(10));
 
         // Table
-        String[] columns = { "No", "Kode Barang", "Nama Barang", "Harga (Rp)", "Stok" };
+        String[] columns = { "No", "Kode Barang", "Nama Barang", "Harga Beli", "Harga Jual", "Stok" };
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -165,8 +175,9 @@ public class ItemDataFrame extends JFrame {
                 if (row != -1) {
                     txtCode.setText(tableModel.getValueAt(row, 1).toString());
                     txtName.setText(tableModel.getValueAt(row, 2).toString());
-                    txtPrice.setText(tableModel.getValueAt(row, 3).toString().replace(".0", ""));
-                    txtStock.setText(tableModel.getValueAt(row, 4).toString());
+                    txtPurchasePrice.setText(tableModel.getValueAt(row, 3).toString().replace(".0", ""));
+                    txtSellingPrice.setText(tableModel.getValueAt(row, 4).toString().replace(".0", ""));
+                    txtStock.setText(tableModel.getValueAt(row, 5).toString());
                     txtCode.setEditable(false); // Cannot change code when editing
                 }
             }
@@ -192,7 +203,8 @@ public class ItemDataFrame extends JFrame {
         int no = 1;
         for (Item item : items) {
             tableModel.addRow(new Object[] {
-                    no++, item.getCode(), item.getName(), item.getPrice(), item.getStock()
+                    no++, item.getCode(), item.getName(), item.getPurchasePrice(), item.getSellingPrice(),
+                    item.getStock()
             });
         }
     }
@@ -201,7 +213,8 @@ public class ItemDataFrame extends JFrame {
         try {
             String code = txtCode.getText();
             String name = txtName.getText();
-            double price = Double.parseDouble(txtPrice.getText());
+            double purchasePrice = Double.parseDouble(txtPurchasePrice.getText());
+            double sellingPrice = Double.parseDouble(txtSellingPrice.getText());
             int stock = Integer.parseInt(txtStock.getText());
 
             if (DataManager.getItemByCode(code) != null) {
@@ -209,7 +222,7 @@ public class ItemDataFrame extends JFrame {
                 return;
             }
 
-            DataManager.addItem(new Item(code, name, price, stock));
+            DataManager.addItem(new Item(code, name, purchasePrice, sellingPrice, stock));
             loadData("");
             clearForm();
             JOptionPane.showMessageDialog(this, "Data berhasil ditambahkan!");
@@ -222,10 +235,11 @@ public class ItemDataFrame extends JFrame {
         try {
             String code = txtCode.getText();
             String name = txtName.getText();
-            double price = Double.parseDouble(txtPrice.getText());
+            double purchasePrice = Double.parseDouble(txtPurchasePrice.getText());
+            double sellingPrice = Double.parseDouble(txtSellingPrice.getText());
             int stock = Integer.parseInt(txtStock.getText());
 
-            DataManager.updateItem(code, new Item(code, name, price, stock));
+            DataManager.updateItem(code, new Item(code, name, purchasePrice, sellingPrice, stock));
             loadData("");
             clearForm();
             JOptionPane.showMessageDialog(this, "Data berhasil diubah!");
@@ -254,7 +268,8 @@ public class ItemDataFrame extends JFrame {
     private void clearForm() {
         txtCode.setText("");
         txtName.setText("");
-        txtPrice.setText("");
+        txtPurchasePrice.setText("");
+        txtSellingPrice.setText("");
         txtStock.setText("");
         txtCode.setEditable(true);
         table.clearSelection();

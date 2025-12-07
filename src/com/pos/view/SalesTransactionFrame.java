@@ -1,6 +1,7 @@
 package com.pos.view;
 
 import com.pos.model.Item;
+import com.pos.model.SalesDetail;
 import com.pos.util.DataManager;
 import com.pos.util.SalesManager;
 import com.pos.util.SolidButton;
@@ -13,15 +14,10 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Vector;
 
 public class SalesTransactionFrame extends JFrame {
     private MainFrame mainFrame;
@@ -91,7 +87,7 @@ public class SalesTransactionFrame extends JFrame {
 
         gbc.gridx = 1;
         cmbItems = new JComboBox<>();
-        cmbItems.addItem(new Item("", "-- Pilih Barang --", 0, 0));
+        cmbItems.addItem(new Item("", "-- Pilih Barang --", 0, 0, 0));
         for (Item item : DataManager.getAllItems()) {
             cmbItems.addItem(item);
         }
@@ -200,7 +196,7 @@ public class SalesTransactionFrame extends JFrame {
             Item item = (Item) cmbItems.getSelectedItem();
             if (item != null && !item.getCode().isEmpty()) {
                 txtCode.setText(item.getCode());
-                txtPrice.setText(String.valueOf(item.getPrice()));
+                txtPrice.setText(String.valueOf(item.getSellingPrice()));
             }
         });
 
@@ -248,13 +244,13 @@ public class SalesTransactionFrame extends JFrame {
                 return;
             }
 
-            double subtotal = item.getPrice() * qty;
+            double subtotal = item.getSellingPrice() * qty;
 
             tableModel.addRow(new Object[] {
                     tableModel.getRowCount() + 1,
                     item.getCode(),
                     item.getName(),
-                    item.getPrice(),
+                    item.getSellingPrice(),
                     qty,
                     subtotal
             });
@@ -301,7 +297,14 @@ public class SalesTransactionFrame extends JFrame {
                 return;
             }
 
-            // Reduce stock
+            // Save Transaction
+            String transactionId = "TRX-" + System.currentTimeMillis();
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // For date column
+            String dateStr = sdf.format(new Date());
+
+            List<SalesDetail> salesDetails = new ArrayList<>();
+
+            // Reduce stock and collect details
             for (int i = 0; i < tableModel.getRowCount(); i++) {
                 String code = (String) tableModel.getValueAt(i, 1);
                 int qty = (int) tableModel.getValueAt(i, 4);
@@ -309,17 +312,25 @@ public class SalesTransactionFrame extends JFrame {
                 if (item != null) {
                     item.setStock(item.getStock() - qty);
                     DataManager.updateItem(code, item);
+
+                    // Add details
+                    salesDetails.add(new SalesDetail(
+                            transactionId,
+                            item.getCode(),
+                            qty,
+                            item.getPurchasePrice(),
+                            item.getSellingPrice(),
+                            dateStr));
                 }
             }
 
-            // Save Transaction
-            String transactionId = "TRX-" + System.currentTimeMillis();
             SalesManager.saveTransaction(transactionId, totalAmount);
+            SalesManager.saveTransactionDetails(salesDetails);
 
             // Generate Receipt
             StringBuilder receipt = new StringBuilder();
-            SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss");
-            String dateStr = sdf.format(new Date());
+            SimpleDateFormat sdfReceipt = new SimpleDateFormat("dd MMMM yyyy HH:mm:ss");
+            String dateReceiptStr = sdfReceipt.format(new Date());
 
             // Header
             receipt.append("             TOKO MEDAN LOUIS AGAM\n");
@@ -330,7 +341,7 @@ public class SalesTransactionFrame extends JFrame {
 
             // Transaction Details
             receipt.append("No. Transaksi: " + transactionId + "\n");
-            receipt.append("Tanggal      : " + dateStr + "\n");
+            receipt.append("Tanggal      : " + dateReceiptStr + "\n");
             receipt.append("Kasir        : Admin\n");
             receipt.append("------------------------------------------------\n");
 

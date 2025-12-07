@@ -13,11 +13,11 @@ public class DataManager {
         loadItems();
         if (items.isEmpty()) {
             // Dummy data
-            items.add(new Item("BRG001", "Indomie Goreng", 3500, 100));
-            items.add(new Item("BRG002", "Aqua 600ml", 4000, 50));
-            items.add(new Item("BRG003", "Teh Botol Sosro", 5500, 75));
-            items.add(new Item("BRG004", "Biskuit Roma Kelapa", 6000, 60));
-            items.add(new Item("BRG005", "Susu Ultra Milk Coklat", 8500, 40));
+            items.add(new Item("BRG001", "Indomie Goreng", 2500, 3500, 100));
+            items.add(new Item("BRG002", "Aqua 600ml", 3000, 4000, 50));
+            items.add(new Item("BRG003", "Teh Botol Sosro", 4000, 5500, 75));
+            items.add(new Item("BRG004", "Biskuit Roma Kelapa", 4500, 6000, 60));
+            items.add(new Item("BRG005", "Susu Ultra Milk Coklat", 6000, 8500, 40));
             saveItems();
         }
     }
@@ -65,8 +65,14 @@ public class DataManager {
             items.clear();
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length == 4) {
-                    items.add(new Item(parts[0], parts[1], Double.parseDouble(parts[2]), Integer.parseInt(parts[3])));
+                if (parts.length == 5) {
+                    items.add(new Item(parts[0], parts[1], Double.parseDouble(parts[2]), Double.parseDouble(parts[3]),
+                            Integer.parseInt(parts[4])));
+                } else if (parts.length == 4) {
+                    // Backward compatibility: assume purchasePrice is 80% of sellingPrice
+                    double sellingPrice = Double.parseDouble(parts[2]);
+                    items.add(
+                            new Item(parts[0], parts[1], sellingPrice * 0.8, sellingPrice, Integer.parseInt(parts[3])));
                 }
             }
         } catch (IOException e) {
@@ -77,7 +83,8 @@ public class DataManager {
     private static void saveItems() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_NAME))) {
             for (Item item : items) {
-                bw.write(item.getCode() + "," + item.getName() + "," + item.getPrice() + "," + item.getStock());
+                bw.write(item.getCode() + "," + item.getName() + "," + item.getPurchasePrice() + ","
+                        + item.getSellingPrice() + "," + item.getStock());
                 bw.newLine();
             }
         } catch (IOException e) {
