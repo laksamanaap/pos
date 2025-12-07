@@ -1,0 +1,25 @@
+             TOKO MEDAN LOUIS AGAM
+               Jl. Soehat No. 19
+           Malang, Jawa Timur 65144
+             Telp: (0341) 123-4567
+------------------------------------------------
+No. Transaksi: TRX-1764726146686
+Tanggal      : 03 December 2025 08:42:26
+Kasir        : Admin
+------------------------------------------------
+Nama Barang        Qty   Harga      Subtotal  
+
+Teh Botol Sosro    3     5,500      16,500    
+------------------------------------------------
+Total Item:       1 Item (3 Pcs)
+
+TOTAL:            Rp 16,500
+Bayar:            Rp 20,000
+Kembalian:        Rp 3,500
+------------------------------------------------
+ Barang yang sudah dibeli tidak dapat ditukar/dikembalikan
+   Simpan struk ini sebagai bukti pembayaran yang sah
+================================================
+                  TERIMA KASIH
+              ATAS KUNJUNGAN ANDA
+================================================

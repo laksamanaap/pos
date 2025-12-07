@@ -1,0 +1,26 @@
+             TOKO MEDAN LOUIS AGAM
+               Jl. Soehat No. 19
+           Malang, Jawa Timur 65144
+             Telp: (0341) 123-4567
+------------------------------------------------
+No. Transaksi: TRX-1764726411751
+Tanggal      : 03 December 2025 08:46:51
+Kasir        : Admin
+------------------------------------------------
+Nama Barang        Qty   Harga      Subtotal  
+
+Mie Goreng Aceh    2     10,000     20,000    
+Susu Ultra Milk Co 2     8,500      17,000    
+------------------------------------------------
+Total Item:       2 Item (4 Pcs)
+
+TOTAL:            Rp 37,000
+Bayar:            Rp 40,000
+Kembalian:        Rp 3,000
+------------------------------------------------
+ Barang yang sudah dibeli tidak dapat ditukar/dikembalikan
+   Simpan struk ini sebagai bukti pembayaran yang sah
+================================================
+                  TERIMA KASIH
+              ATAS KUNJUNGAN ANDA
+================================================
