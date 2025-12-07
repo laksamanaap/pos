@@ -22,7 +22,7 @@ public class MainFrame extends JFrame {
     private JTextArea txtTopProducts;
 
     public MainFrame() {
-        setTitle("Aplikasi Kasir Sederhana");
+        setTitle("Toko Medan Agam City Oi Oi");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1000, 700); // Increased width for stats
         setLocationRelativeTo(null);
@@ -34,7 +34,7 @@ public class MainFrame extends JFrame {
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(new EmptyBorder(20, 20, 10, 20));
 
-        JLabel titleLabel = new JLabel("APLIKASI KASIR SEDERHANA", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("Toko Medan Agam City Oi Oi", SwingConstants.CENTER);
         titleLabel.setFont(Style.HEADER_FONT);
         titleLabel.setForeground(Style.TEXT_COLOR);
 

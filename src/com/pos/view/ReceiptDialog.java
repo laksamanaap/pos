@@ -6,16 +6,17 @@ import com.pos.util.Style;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.awt.print.*;
 
 public class ReceiptDialog extends JDialog {
     private JTextArea txtReceipt;
+    private JPanel receiptPanel;
+    private String transactionId;
 
-    public ReceiptDialog(JFrame parent, String receiptText) {
+    public ReceiptDialog(JFrame parent, String receiptText, String transactionId) {
         super(parent, "Struk Pembelian", true);
-        setSize(600, 700);
+        this.transactionId = transactionId;
+        setSize(600, 750);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
@@ -25,7 +26,7 @@ public class ReceiptDialog extends JDialog {
         mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         // Inner White Panel with Dashed Border
-        JPanel receiptPanel = new JPanel(new GridBagLayout()) {
+        receiptPanel = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -59,7 +60,13 @@ public class ReceiptDialog extends JDialog {
         scrollPane.getViewport().setOpaque(false);
         scrollPane.setBorder(null);
 
-        receiptPanel.add(scrollPane, new GridBagConstraints());
+        // GridBagConstraints for centering
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        gbc.fill = GridBagConstraints.BOTH;
+        receiptPanel.add(scrollPane, gbc);
+
         mainPanel.add(receiptPanel, BorderLayout.CENTER);
 
         add(mainPanel, BorderLayout.CENTER);
@@ -83,27 +90,62 @@ public class ReceiptDialog extends JDialog {
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Listeners
-        btnPrint.addActionListener(e -> {
-            try {
-                txtReceipt.print();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Gagal mencetak: " + ex.getMessage());
-            }
-        });
+        btnPrint.addActionListener(e -> printPanel(false)); // False = just print
 
         btnSave.addActionListener(e -> {
-            try {
-                String fileName = "Struk_" + System.currentTimeMillis() + ".txt";
-                BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-                writer.write(txtReceipt.getText());
-                writer.close();
-                JOptionPane.showMessageDialog(this,
-                        "Struk berhasil disimpan ke " + fileName + "\n(PDF generation requires external libraries)");
-            } catch (IOException ex) {
-                JOptionPane.showMessageDialog(this, "Gagal menyimpan: " + ex.getMessage());
-            }
+            // Copy Transaction ID to Clipboard
+            java.awt.datatransfer.StringSelection selection = new java.awt.datatransfer.StringSelection(transactionId);
+            java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
+
+            JOptionPane.showMessageDialog(this,
+                    "Nama file (" + transactionId + ") telah disalin ke Clipboard!\n" +
+                            "Silakan 'Paste' (Ctrl+V) di kolom File Name saat menyimpan.\n\n" +
+                            "Pilih 'Microsoft Print to PDF' atau 'Save as PDF'.",
+                    "Siap Simpan PDF", JOptionPane.INFORMATION_MESSAGE);
+            printPanel(true);
         });
 
         btnClose.addActionListener(e -> dispose());
+    }
+
+    private void printPanel(boolean isPdfMode) {
+        PrinterJob job = PrinterJob.getPrinterJob();
+        job.setJobName(transactionId);
+
+        job.setPrintable(new Printable() {
+            @Override
+            public int print(Graphics pg, PageFormat pf, int pageNum) {
+                if (pageNum > 0) {
+                    return Printable.NO_SUCH_PAGE;
+                }
+
+                Graphics2D g2 = (Graphics2D) pg;
+                g2.translate(pf.getImageableX(), pf.getImageableY());
+
+                // Scale to fit page
+                double scaleX = pf.getImageableWidth() / receiptPanel.getWidth();
+                double scaleY = pf.getImageableHeight() / receiptPanel.getHeight();
+                double scale = Math.min(scaleX, scaleY); // Maintain aspect ratio
+
+                // Don't upscale, just downscale if larger than page
+                if (scale > 1)
+                    scale = 1;
+
+                g2.scale(scale, scale);
+
+                // Print the receipt panel
+                receiptPanel.paint(g2);
+
+                return Printable.PAGE_EXISTS;
+            }
+        });
+
+        if (job.printDialog()) {
+            try {
+                job.print();
+            } catch (PrinterException ex) {
+                JOptionPane.showMessageDialog(this, "Gagal mencetak: " + ex.getMessage());
+            }
+        }
     }
 }

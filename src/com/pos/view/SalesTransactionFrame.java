@@ -387,7 +387,7 @@ public class SalesTransactionFrame extends JFrame {
             receipt.append("              ATAS KUNJUNGAN ANDA\n");
             receipt.append("================================================\n");
 
-            new ReceiptDialog(this, receipt.toString()).setVisible(true);
+            new ReceiptDialog(this, receipt.toString(), transactionId).setVisible(true);
 
             // Reset
             tableModel.setRowCount(0);
