@@ -272,7 +272,7 @@ public class SalesTransactionFrame extends JFrame {
                 cmbItems.setSelectedItem(item);
                 txtQty.requestFocus();
             } else {
-                JOptionPane.showMessageDialog(this, "Barang tidak ditemukan!");
+                UIUtils.showInfo(this, "Barang tidak ditemukan", "Barang tidak ditemukan!");
             }
         });
 
@@ -294,18 +294,18 @@ public class SalesTransactionFrame extends JFrame {
         try {
             Item item = (Item) cmbItems.getSelectedItem();
             if (item == null || item.getCode().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Pilih barang terlebih dahulu!");
+                UIUtils.showInfo(this, "Peringatan", "Pilih barang terlebih dahulu!");
                 return;
             }
 
             int qty = Integer.parseInt(txtQty.getText());
             if (qty <= 0) {
-                JOptionPane.showMessageDialog(this, "Jumlah harus lebih dari 0!");
+                UIUtils.showWarning(this, "Peringatan", "Jumlah harus lebih dari 0!");
                 return;
             }
 
             if (qty > item.getStock()) {
-                JOptionPane.showMessageDialog(this, "Stok tidak mencukupi! Stok: " + item.getStock());
+                UIUtils.showWarning(this, "Stok", "Stok tidak mencukupi! Stok: " + item.getStock());
                 return;
             }
 
@@ -327,7 +327,7 @@ public class SalesTransactionFrame extends JFrame {
             txtPrice.setText("");
 
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Input jumlah tidak valid!");
+            UIUtils.showWarning(this, "Input Tidak Valid", "Input jumlah tidak valid!");
         }
     }
 
@@ -358,7 +358,7 @@ public class SalesTransactionFrame extends JFrame {
         try {
             double pay = Double.parseDouble(txtPay.getText());
             if (pay < totalAmount) {
-                JOptionPane.showMessageDialog(this, "Uang pembayaran kurang!");
+                UIUtils.showWarning(this, "Pembayaran", "Uang pembayaran kurang!");
                 return;
             }
 
@@ -461,7 +461,7 @@ public class SalesTransactionFrame extends JFrame {
             txtChange.setText("");
 
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Input pembayaran tidak valid!");
+            UIUtils.showWarning(this, "Input Tidak Valid", "Input pembayaran tidak valid!");
         }
     }
 }

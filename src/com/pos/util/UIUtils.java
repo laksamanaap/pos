@@ -91,6 +91,9 @@ public class UIUtils {
             case "back":
                 drawBack(g2, padding, size);
                 break;
+            case "info":
+                drawInfo(g2, padding, size);
+                break;
             case "check":
                 drawCheck(g2, padding, size);
                 break;
@@ -215,7 +218,151 @@ public class UIUtils {
         g.drawLine(padding + w - 3, padding + 3, padding + 3, padding + w - 3);
     }
 
+    private static void drawInfo(Graphics2D g, int padding, int size) {
+        int w = size - padding * 2;
+        int cx = padding + w / 2;
+        int cy = padding + w / 2;
+        int r = Math.max(4, w / 4);
+        // Circle
+        g.drawOval(cx - r, cy - r, r * 2, r * 2);
+        // vertical bar of 'i'
+        g.fillRect(cx - 1, cy - r/2, 2, r);
+        // dot
+        g.fillOval(cx - 1, cy - r - 4, 4, 4);
+    }
+
     private static void drawDefault(Graphics2D g, int padding, int size) {
         // Default: just the rounded background is drawn
+    }
+
+    // ------------------ Modern Dialog Helpers ------------------
+    public static void showInfo(Component parent, String title, String message) {
+        ModernDialog d = new ModernDialog(SwingUtilities.getWindowAncestor(parent), title, message, "info");
+        d.showDialog();
+    }
+
+    public static void showWarning(Component parent, String title, String message) {
+        ModernDialog d = new ModernDialog(SwingUtilities.getWindowAncestor(parent), title, message, "warning");
+        d.showDialog();
+    }
+
+    public static void showError(Component parent, String title, String message) {
+        ModernDialog d = new ModernDialog(SwingUtilities.getWindowAncestor(parent), title, message, "error");
+        d.showDialog();
+    }
+
+    /**
+     * Show a confirm dialog. Returns true if user pressed OK/Yes.
+     */
+    public static boolean showConfirm(Component parent, String title, String message) {
+        ModernDialog d = new ModernDialog(SwingUtilities.getWindowAncestor(parent), title, message, "confirm");
+        return d.showDialog();
+    }
+
+    private static class ModernDialog extends JDialog {
+        private boolean result = false;
+
+        public ModernDialog(Window owner, String title, String message, String type) {
+            super(owner, ModalityType.APPLICATION_MODAL);
+            setUndecorated(true);
+            setLayout(new BorderLayout());
+            // Larger dialog size for better readability
+            setSize(600, 300);
+            setLocationRelativeTo(owner);
+
+            // Header
+            JPanel header = new JPanel() {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    super.paintComponent(g);
+                    Graphics2D g2 = (Graphics2D) g;
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    GradientPaint gp = new GradientPaint(0, 0, Style.GRADIENT_START, getWidth(), 0, Style.GRADIENT_END);
+                    g2.setPaint(gp);
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight() + 8, 16, 16);
+                }
+            };
+            header.setPreferredSize(new Dimension(600, 64));
+            header.setLayout(new BorderLayout(12, 0));
+            header.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+
+            JLabel lblTitle = new JLabel(title);
+            lblTitle.setForeground(Color.WHITE);
+            lblTitle.setFont(Style.BOLD_FONT.deriveFont(16f));
+
+            // Icon (bigger)
+            JLabel iconLabel = new JLabel();
+            ImageIcon ic;
+            switch (type) {
+                case "warning": ic = createModernIcon("x", Style.ACCENT_COLOR, 44); break;
+                case "error": ic = createModernIcon("x", Style.DANGER_COLOR, 44); break;
+                case "confirm": ic = createModernIcon("check", Style.PRIMARY_COLOR, 44); break;
+                default: ic = createModernIcon("info", Style.PRIMARY_COLOR, 44); break;
+            }
+            iconLabel.setIcon(ic);
+            iconLabel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 8));
+
+            header.add(iconLabel, BorderLayout.WEST);
+            header.add(lblTitle, BorderLayout.CENTER);
+
+            // Content
+            JPanel content = new JPanel(new BorderLayout());
+            content.setBackground(Style.SURFACE_COLOR);
+            content.setBorder(BorderFactory.createEmptyBorder(20, 20, 16, 20));
+
+            JTextArea txt = new JTextArea(message);
+            txt.setEditable(false);
+            txt.setOpaque(false);
+            txt.setFont(Style.REGULAR_FONT.deriveFont(14f));
+            txt.setLineWrap(true);
+            txt.setWrapStyleWord(true);
+
+            content.add(txt, BorderLayout.CENTER);
+
+            // Buttons
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 6));
+            actions.setOpaque(false);
+
+            SolidButton ok = new SolidButton("OK", Style.PRIMARY_COLOR);
+            ok.setPreferredSize(new Dimension(140, 44));
+            ok.setFont(Style.BOLD_FONT.deriveFont(14f));
+            ok.addActionListener(e -> {
+                result = true;
+                dispose();
+            });
+
+            SolidButton cancel = new SolidButton("Batal", Style.BORDER_COLOR);
+            cancel.setPreferredSize(new Dimension(140, 44));
+            cancel.setFont(Style.REGULAR_FONT.deriveFont(13f));
+            cancel.addActionListener(e -> {
+                result = false;
+                dispose();
+            });
+
+            if ("confirm".equals(type)) {
+                actions.add(cancel);
+                actions.add(ok);
+            } else {
+                actions.add(ok);
+            }
+
+            JPanel bottom = new JPanel(new BorderLayout());
+            bottom.setBackground(Style.SURFACE_COLOR);
+            bottom.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+            bottom.add(actions, BorderLayout.EAST);
+
+            // Compose
+            add(header, BorderLayout.NORTH);
+            add(content, BorderLayout.CENTER);
+            add(bottom, BorderLayout.SOUTH);
+
+            // Round window shape
+            setShape(new RoundRectangle2D.Double(0, 0, getWidth(), getHeight(), 16, 16));
+        }
+
+        public boolean showDialog() {
+            setVisible(true);
+            return result;
+        }
     }
 }

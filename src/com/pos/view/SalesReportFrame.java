@@ -271,7 +271,7 @@ public class SalesReportFrame extends JFrame {
     private void exportToCSV() {
         List<String[]> filtered = getFilteredHistory();
         if (filtered.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Tidak ada data untuk diekspor.", "Export", JOptionPane.INFORMATION_MESSAGE);
+            UIUtils.showInfo(this, "Export", "Tidak ada data untuk diekspor.");
             return;
         }
         
@@ -368,11 +368,11 @@ public class SalesReportFrame extends JFrame {
             bw.newLine();
             
             bw.flush();
-            JOptionPane.showMessageDialog(this, "Export selesai: " + file.getAbsolutePath(), "Export", JOptionPane.INFORMATION_MESSAGE);
+            UIUtils.showInfo(this, "Export", "Export selesai: " + file.getAbsolutePath());
             
         } catch (Exception e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal saat ekspor: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            UIUtils.showError(this, "Error", "Gagal saat ekspor: " + e.getMessage());
         }
     }
 
@@ -398,24 +398,87 @@ public class SalesReportFrame extends JFrame {
 
     private void showTransactionDetail(String trxId) {
         List<com.pos.model.SalesDetail> details = com.pos.util.SalesManager.getAllSalesDetails();
-        StringBuilder sb = new StringBuilder();
-        sb.append("ID Transaksi: ").append(trxId).append("\n");
-        sb.append("------------------------------------------\n");
-        sb.append(String.format("%-10s %-6s %-10s %-10s %-10s\n", "Kode", "Qty", "Harga", "Subtotal", "Laba"));
+
+        // Table columns for detail view
+        String[] cols = { "No", "Kode", "Nama", "Qty", "Harga (Rp)", "Subtotal (Rp)", "Laba (Rp)" };
+        DefaultTableModel dm = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        int no = 1;
         double total = 0;
         double totalProfit = 0;
         for (com.pos.model.SalesDetail d : details) {
             if (d.getTransactionId().equals(trxId)) {
                 double subtotal = d.getQuantity() * d.getSellingPrice();
                 double itemProfit = (d.getSellingPrice() - d.getPurchasePrice()) * d.getQuantity();
-                sb.append(String.format("%-10s %-6d %-10.0f %-10.0f %-10.0f\n", d.getItemCode(), d.getQuantity(), d.getSellingPrice(), subtotal, itemProfit));
+                com.pos.model.Item item = DataManager.getItemByCode(d.getItemCode());
+                String itemName = item != null ? item.getName() : d.getItemCode();
+                dm.addRow(new Object[] {
+                        no++, d.getItemCode(), itemName, d.getQuantity(), String.format("%.0f", d.getSellingPrice()),
+                        String.format("%.0f", subtotal), String.format("%.0f", itemProfit)
+                });
                 total += subtotal;
                 totalProfit += itemProfit;
             }
         }
-        sb.append("------------------------------------------\n");
-        sb.append("Total: Rp " + String.format("%.0f", total) + "\n");
-        sb.append("Total Laba: Rp " + String.format("%.0f", totalProfit));
-        JOptionPane.showMessageDialog(this, sb.toString(), "Detail Transaksi", JOptionPane.INFORMATION_MESSAGE);
+
+        JTable detailTable = new JTable(dm);
+        UIUtils.customizeTable(detailTable);
+        detailTable.setRowHeight(28);
+
+        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+        right.setHorizontalAlignment(DefaultTableCellRenderer.RIGHT);
+        // Align numeric columns (Qty, Harga, Subtotal, Laba)
+        detailTable.getColumnModel().getColumn(3).setCellRenderer(right);
+        detailTable.getColumnModel().getColumn(4).setCellRenderer(right);
+        detailTable.getColumnModel().getColumn(5).setCellRenderer(right);
+        detailTable.getColumnModel().getColumn(6).setCellRenderer(right);
+
+        JScrollPane sp = new JScrollPane(detailTable);
+        sp.setPreferredSize(new Dimension(720, 320));
+
+        JPanel content = new JPanel(new BorderLayout(12, 12));
+        content.setBackground(Style.SURFACE_COLOR);
+        content.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
+        JLabel lblTitle = new JLabel("ID Transaksi: " + trxId);
+        lblTitle.setFont(Style.BOLD_FONT);
+        lblTitle.setBorder(new EmptyBorder(6, 6, 6, 6));
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.add(lblTitle, BorderLayout.WEST);
+
+        JPanel totals = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        totals.setOpaque(false);
+        JLabel lblTotals = new JLabel("Total: Rp " + String.format("%.0f", total) + "   " + "Total Laba: Rp " + String.format("%.0f", totalProfit));
+        lblTotals.setFont(Style.BOLD_FONT);
+        totals.add(lblTotals);
+
+        content.add(top, BorderLayout.NORTH);
+        content.add(sp, BorderLayout.CENTER);
+        content.add(totals, BorderLayout.SOUTH);
+
+        JDialog dialog = new JDialog(this, "Detail Transaksi", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.getContentPane().setBackground(Style.BACKGROUND_COLOR);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(content, BorderLayout.CENTER);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        actions.setBackground(Style.SURFACE_COLOR);
+        SolidButton btnClose = new SolidButton("Tutup", Style.BORDER_COLOR);
+        btnClose.setPreferredSize(new Dimension(120, 40));
+        btnClose.addActionListener(e -> dialog.dispose());
+        actions.add(btnClose);
+        dialog.add(actions, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
     }
 }

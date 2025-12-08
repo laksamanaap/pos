@@ -111,7 +111,7 @@ public class MainFrame extends JFrame {
         btnSales.addActionListener(e -> openSalesTransaction());
         btnItems.addActionListener(e -> openItemData());
         btnReport.addActionListener(e -> openSalesReport());
-        btnSettings.addActionListener(e -> JOptionPane.showMessageDialog(this, "Fitur Pengaturan belum tersedia."));
+        btnSettings.addActionListener(e -> UIUtils.showInfo(this, "Pengaturan", "Fitur Pengaturan belum tersedia."));
 
         menuPanel.add(btnSales);
         menuPanel.add(btnItems);

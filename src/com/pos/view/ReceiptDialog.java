@@ -2,6 +2,7 @@ package com.pos.view;
 
 import com.pos.util.SolidButton;
 import com.pos.util.Style;
+import com.pos.util.UIUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -97,11 +98,10 @@ public class ReceiptDialog extends JDialog {
             java.awt.datatransfer.StringSelection selection = new java.awt.datatransfer.StringSelection(transactionId);
             java.awt.Toolkit.getDefaultToolkit().getSystemClipboard().setContents(selection, selection);
 
-            JOptionPane.showMessageDialog(this,
+                UIUtils.showInfo(this, "Siap Simpan PDF",
                     "Nama file (" + transactionId + ") telah disalin ke Clipboard!\n" +
-                            "Silakan 'Paste' (Ctrl+V) di kolom File Name saat menyimpan.\n\n" +
-                            "Pilih 'Microsoft Print to PDF' atau 'Save as PDF'.",
-                    "Siap Simpan PDF", JOptionPane.INFORMATION_MESSAGE);
+                        "Silakan 'Paste' (Ctrl+V) di kolom File Name saat menyimpan.\n\n" +
+                        "Pilih 'Microsoft Print to PDF' atau 'Save as PDF'.");
             printPanel(true);
         });
 
@@ -144,7 +144,7 @@ public class ReceiptDialog extends JDialog {
             try {
                 job.print();
             } catch (PrinterException ex) {
-                JOptionPane.showMessageDialog(this, "Gagal mencetak: " + ex.getMessage());
+                UIUtils.showError(this, "Gagal Mencetak", "Gagal mencetak: " + ex.getMessage());
             }
         }
     }

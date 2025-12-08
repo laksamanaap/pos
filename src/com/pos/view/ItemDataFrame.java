@@ -244,16 +244,16 @@ public class ItemDataFrame extends JFrame {
             int stock = Integer.parseInt(txtStock.getText());
 
             if (DataManager.getItemByCode(code) != null) {
-                JOptionPane.showMessageDialog(this, "Kode barang sudah ada!");
+                UIUtils.showWarning(this, "Duplikasi Kode", "Kode barang sudah ada!");
                 return;
             }
 
             DataManager.addItem(new Item(code, name, purchasePrice, sellingPrice, stock));
             loadData("");
             clearForm();
-            JOptionPane.showMessageDialog(this, "Data berhasil ditambahkan!");
+            UIUtils.showInfo(this, "Sukses", "Data berhasil ditambahkan!");
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Input harga/stok tidak valid!");
+            UIUtils.showWarning(this, "Input Tidak Valid", "Input harga/stok tidak valid!");
         }
     }
 
@@ -268,26 +268,25 @@ public class ItemDataFrame extends JFrame {
             DataManager.updateItem(code, new Item(code, name, purchasePrice, sellingPrice, stock));
             loadData("");
             clearForm();
-            JOptionPane.showMessageDialog(this, "Data berhasil diubah!");
+            UIUtils.showInfo(this, "Sukses", "Data berhasil diubah!");
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Input harga/stok tidak valid!");
+            UIUtils.showWarning(this, "Input Tidak Valid", "Input harga/stok tidak valid!");
         }
     }
 
     private void deleteItem() {
         String code = txtCode.getText();
         if (code.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Pilih barang yang akan dihapus!");
+            UIUtils.showInfo(this, "Peringatan", "Pilih barang yang akan dihapus!");
             return;
         }
 
-        int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin menghapus data ini?", "Konfirmasi",
-                JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        boolean confirm = UIUtils.showConfirm(this, "Konfirmasi", "Yakin ingin menghapus data ini?");
+        if (confirm) {
             DataManager.deleteItem(code);
             loadData("");
             clearForm();
-            JOptionPane.showMessageDialog(this, "Data berhasil dihapus!");
+            UIUtils.showInfo(this, "Sukses", "Data berhasil dihapus!");
         }
     }
 
