@@ -38,16 +38,28 @@ public class SalesTransactionFrame extends JFrame {
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
 
         // Header
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
+        JPanel headerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gradient = new GradientPaint(0, 0, Style.GRADIENT_START, getWidth(), 0, Style.GRADIENT_END);
+                g2.setPaint(gradient);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         JLabel titleLabel = new JLabel("TRANSAKSI PENJUALAN");
-        titleLabel.setFont(Style.SUBHEADER_FONT);
-        titleLabel.setForeground(Style.TEXT_COLOR);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(Color.WHITE);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
         JLabel dateLabel = new JLabel("Tanggal: " + sdf.format(new Date()));
+        dateLabel.setFont(Style.REGULAR_FONT);
+        dateLabel.setForeground(Color.WHITE);
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(dateLabel, BorderLayout.EAST);
@@ -57,12 +69,29 @@ public class SalesTransactionFrame extends JFrame {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        contentPanel.setBackground(Style.BACKGROUND_COLOR);
+        contentPanel.setBackground(Style.BACKGROUND_COLOR);;
 
         // Input Panel
-        JPanel inputPanel = new JPanel(new GridBagLayout());
-        inputPanel.setBackground(Color.WHITE);
-        inputPanel.setBorder(BorderFactory.createTitledBorder("Input Barang"));
+        JPanel inputPanel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(Style.BORDER_COLOR);
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        inputPanel.setOpaque(false);
+        inputPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEmptyBorder(), "Input Barang",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                Style.BOLD_FONT, Style.TEXT_COLOR));
+        inputPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 10, 5, 10);
@@ -133,12 +162,30 @@ public class SalesTransactionFrame extends JFrame {
         paymentPanel.setBackground(Style.BACKGROUND_COLOR);
 
         // Left: Payment Input
-        JPanel payInputPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        payInputPanel.setBackground(Color.WHITE);
-        payInputPanel.setBorder(BorderFactory.createTitledBorder("Pembayaran"));
+        JPanel payInputPanel = new JPanel(new GridLayout(4, 2, 10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(Style.BORDER_COLOR);
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        payInputPanel.setOpaque(false);
+        payInputPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEmptyBorder(), "Pembayaran",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                Style.BOLD_FONT, Style.TEXT_COLOR));
+        payInputPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         payInputPanel.add(new JLabel("Jumlah Bayar (Rp):"));
         txtPay = new JTextField();
+        txtPay.setBackground(Style.SURFACE_COLOR);
         payInputPanel.add(txtPay);
 
         payInputPanel.add(new JLabel("Kembalian:"));
@@ -146,12 +193,30 @@ public class SalesTransactionFrame extends JFrame {
         txtChange.setEditable(false);
         txtChange.setForeground(Style.SUCCESS_COLOR);
         txtChange.setFont(Style.BOLD_FONT);
+        txtChange.setBackground(Style.SURFACE_COLOR);
         payInputPanel.add(txtChange);
 
         // Right: Summary
-        JPanel summaryPanel = new JPanel(new GridLayout(4, 2, 10, 10));
-        summaryPanel.setBackground(Color.WHITE);
-        summaryPanel.setBorder(BorderFactory.createTitledBorder("Ringkasan"));
+        JPanel summaryPanel = new JPanel(new GridLayout(4, 2, 10, 10)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(Style.BORDER_COLOR);
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        summaryPanel.setOpaque(false);
+        summaryPanel.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createEmptyBorder(), "Ringkasan",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                Style.BOLD_FONT, Style.TEXT_COLOR));
+        summaryPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         summaryPanel.add(new JLabel("Jumlah Item:"));
         lblTotalItems = new JLabel("0 Item");

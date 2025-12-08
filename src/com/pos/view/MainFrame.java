@@ -12,6 +12,7 @@ import com.pos.util.UIUtils;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -25,58 +26,70 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         setTitle("Toko Medan Agam City Oi Oi");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 700); // Increased width for stats
+        setSize(1000, 700);
         setLocationRelativeTo(null);
-        getContentPane().setBackground(Color.WHITE);
+        getContentPane().setBackground(Style.BACKGROUND_COLOR);
         setLayout(new BorderLayout());
 
-        // Header
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(new EmptyBorder(20, 20, 10, 20));
+        // Header with Gradient Background
+        JPanel headerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gradient = new GradientPaint(0, 0, Style.GRADIENT_START, getWidth(), 0, Style.GRADIENT_END);
+                g2.setPaint(gradient);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        headerPanel.setBorder(new EmptyBorder(25, 20, 20, 20));
+        headerPanel.setOpaque(false);
 
         JLabel titleLabel = new JLabel("Toko Medan Agam City Oi Oi", SwingConstants.CENTER);
-        titleLabel.setFont(Style.HEADER_FONT);
-        titleLabel.setForeground(Style.TEXT_COLOR);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        titleLabel.setForeground(Color.WHITE);
 
         JLabel subtitleLabel = new JLabel("Sistem Kasir Berbasis Java Swing", SwingConstants.CENTER);
-        subtitleLabel.setFont(Style.REGULAR_FONT);
-        subtitleLabel.setForeground(Color.GRAY);
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        subtitleLabel.setForeground(new Color(220, 220, 220));
 
         JPanel titleContainer = new JPanel(new GridLayout(2, 1));
-        titleContainer.setBackground(Color.WHITE);
+        titleContainer.setBackground(null);
+        titleContainer.setOpaque(false);
         titleContainer.add(titleLabel);
         titleContainer.add(subtitleLabel);
 
         headerPanel.add(titleContainer, BorderLayout.NORTH);
 
-        // Info Bar
+        // Info Bar with Fresh Background
         JPanel infoPanel = new JPanel(new BorderLayout());
-        infoPanel.setBackground(new Color(248, 249, 250));
-        infoPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
+        infoPanel.setBackground(new Color(255, 255, 255));
+        infoPanel.setBorder(new EmptyBorder(12, 20, 12, 20));
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
         JLabel dateLabel = new JLabel("Tanggal: " + sdf.format(new Date()));
         dateLabel.setFont(Style.REGULAR_FONT);
+        dateLabel.setForeground(Style.TEXT_COLOR);
 
         JLabel userLabel = new JLabel("Kasir: Admin");
         userLabel.setFont(Style.REGULAR_FONT);
+        userLabel.setForeground(Style.TEXT_COLOR);
 
         infoPanel.add(dateLabel, BorderLayout.WEST);
         infoPanel.add(userLabel, BorderLayout.EAST);
 
         headerPanel.add(infoPanel, BorderLayout.SOUTH);
-
         add(headerPanel, BorderLayout.NORTH);
 
         // Center Panel (Stats + Menu)
         JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBackground(Style.BACKGROUND_COLOR);
 
         // Stats Panel
         JPanel statsPanel = new JPanel(new GridLayout(1, 3, 20, 0));
-        statsPanel.setBackground(Color.WHITE);
-        statsPanel.setBorder(new EmptyBorder(10, 50, 10, 50));
+        statsPanel.setBackground(Style.BACKGROUND_COLOR);
+        statsPanel.setBorder(new EmptyBorder(20, 50, 20, 50));
 
         statsPanel.add(createStatCard("Total Transaksi", "lblTotalTransactions"));
         statsPanel.add(createStatCard("Total Keuntungan", "lblTotalProfit"));
@@ -86,7 +99,7 @@ public class MainFrame extends JFrame {
 
         // Menu Grid
         JPanel menuPanel = new JPanel(new GridLayout(2, 2, 20, 20));
-        menuPanel.setBackground(Color.WHITE);
+        menuPanel.setBackground(Style.BACKGROUND_COLOR);
         menuPanel.setBorder(new EmptyBorder(30, 50, 30, 50));
 
         GradientButton btnSales = createMenuButton("Transaksi Penjualan", "cart");
@@ -125,18 +138,28 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createStatCard(String title, String labelName) {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(new Color(240, 248, 255)); // Light Alice Blue
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(15, 15, 15, 15)));
+        JPanel card = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(new Color(224, 224, 224, 100));
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(20, 15, 20, 15));
 
         JLabel lblTitle = new JLabel(title);
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitle.setForeground(Color.GRAY);
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblTitle.setForeground(Style.TEXT_SECONDARY);
 
         JLabel lblValue = new JLabel("0");
-        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        lblValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
         lblValue.setForeground(Style.PRIMARY_COLOR);
 
         if (labelName.equals("lblTotalTransactions"))
@@ -151,15 +174,25 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createTopProductsCard() {
-        JPanel card = new JPanel(new BorderLayout());
-        card.setBackground(new Color(255, 250, 240)); // Floral White
-        card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
-                new EmptyBorder(15, 15, 15, 15)));
+        JPanel card = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(new Color(224, 224, 224, 100));
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        card.setOpaque(false);
+        card.setBorder(new EmptyBorder(15, 15, 15, 15));
 
         JLabel lblTitle = new JLabel("Produk Terlaris");
-        lblTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lblTitle.setForeground(Color.GRAY);
+        lblTitle.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblTitle.setForeground(Style.TEXT_SECONDARY);
 
         txtTopProducts = new JTextArea();
         txtTopProducts.setEditable(false);

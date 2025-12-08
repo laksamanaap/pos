@@ -42,11 +42,21 @@ public class SalesReportFrame extends JFrame {
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
 
         // Header (modern)
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Style.GRADIENT_START);
-        headerPanel.setBorder(new EmptyBorder(16, 20, 16, 20));
-        JLabel titleLabel = new JLabel("Laporan Penjualan");
-        titleLabel.setFont(Style.HEADER_FONT);
+        JPanel headerPanel = new JPanel(new BorderLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gradient = new GradientPaint(0, 0, Style.GRADIENT_START, getWidth(), 0, Style.GRADIENT_END);
+                g2.setPaint(gradient);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        JLabel titleLabel = new JLabel("LAPORAN PENJUALAN");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
@@ -56,9 +66,21 @@ public class SalesReportFrame extends JFrame {
         contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         contentPanel.setBackground(Style.BACKGROUND_COLOR);
 
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 8));
-        filterPanel.setBackground(Style.BACKGROUND_COLOR);
-        filterPanel.setBorder(new EmptyBorder(6, 6, 6, 6));
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 12)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(Style.BORDER_COLOR);
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        filterPanel.setOpaque(false);
+        filterPanel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         filterPanel.add(new JLabel("Dari:"));
         SpinnerDateModel startModel = new SpinnerDateModel();

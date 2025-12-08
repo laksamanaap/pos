@@ -30,13 +30,23 @@ public class ItemDataFrame extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
 
-        // Header
-        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        headerPanel.setBackground(Color.WHITE);
-        headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
+        // Header with Gradient
+        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT)) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                GradientPaint gradient = new GradientPaint(0, 0, Style.GRADIENT_START, getWidth(), 0, Style.GRADIENT_END);
+                g2.setPaint(gradient);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        headerPanel.setOpaque(false);
+        headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         JLabel titleLabel = new JLabel("MANAJEMEN DATA BARANG");
-        titleLabel.setFont(Style.SUBHEADER_FONT);
-        titleLabel.setForeground(Style.TEXT_COLOR);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel);
         add(headerPanel, BorderLayout.NORTH);
 
@@ -46,12 +56,22 @@ public class ItemDataFrame extends JFrame {
         contentPanel.setBackground(Style.BACKGROUND_COLOR);
         contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        // Form Panel
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        formPanel.setBackground(Color.WHITE);
-        formPanel.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(230, 230, 230), 1),
-                new EmptyBorder(20, 20, 20, 20)));
+        // Form Panel with modern rounded design
+        JPanel formPanel = new JPanel(new GridBagLayout()) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Style.SURFACE_COLOR);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.setColor(Style.BORDER_COLOR);
+                g2.setStroke(new BasicStroke(1.0f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+            }
+        };
+        formPanel.setOpaque(false);
+        formPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -122,9 +142,15 @@ public class ItemDataFrame extends JFrame {
         // Search Panel
         JPanel searchPanel = new JPanel(new BorderLayout(10, 0));
         searchPanel.setBackground(Style.BACKGROUND_COLOR);
-        searchPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        searchPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
         txtSearch = new JTextField();
+        txtSearch.setBackground(Style.SURFACE_COLOR);
+        txtSearch.setForeground(Style.TEXT_COLOR);
+        txtSearch.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_COLOR, 1),
+                new EmptyBorder(8, 8, 8, 8)));
+        
         JButton btnSearch = createButton("Cari", Style.PRIMARY_COLOR);
 
         searchPanel.add(new JLabel("Cari barang: "), BorderLayout.WEST);
