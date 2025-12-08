@@ -42,7 +42,7 @@ public class SalesTransactionFrame extends JFrame {
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("🛍️ TRANSAKSI PENJUALAN");
+        JLabel titleLabel = new JLabel("TRANSAKSI PENJUALAN");
         titleLabel.setFont(Style.SUBHEADER_FONT);
         titleLabel.setForeground(Style.TEXT_COLOR);
 
@@ -106,7 +106,7 @@ public class SalesTransactionFrame extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 4;
-        JButton btnAdd = new SolidButton("➕ Tambah ke Keranjang", Style.SUCCESS_COLOR);
+        JButton btnAdd = new SolidButton("Tambah ke Keranjang", Style.SUCCESS_COLOR);
         inputPanel.add(btnAdd, gbc);
 
         contentPanel.add(inputPanel);
@@ -179,7 +179,7 @@ public class SalesTransactionFrame extends JFrame {
 
         JButton btnCancel = new SolidButton("Batal", Style.DANGER_COLOR);
 
-        JButton btnBack = new JButton("Kembali");
+        JButton btnBack = new SolidButton("Kembali", Color.GRAY);
         btnBack.addActionListener(e -> {
             mainFrame.setVisible(true);
             dispose();

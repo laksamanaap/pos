@@ -34,7 +34,7 @@ public class ItemDataFrame extends JFrame {
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
-        JLabel titleLabel = new JLabel("📦 MANAJEMEN DATA BARANG");
+        JLabel titleLabel = new JLabel("MANAJEMEN DATA BARANG");
         titleLabel.setFont(Style.SUBHEADER_FONT);
         titleLabel.setForeground(Style.TEXT_COLOR);
         headerPanel.add(titleLabel);

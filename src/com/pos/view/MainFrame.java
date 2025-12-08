@@ -7,6 +7,7 @@ import com.pos.util.GradientButton;
 import com.pos.util.SalesManager;
 import com.pos.util.SolidButton;
 import com.pos.util.Style;
+import com.pos.util.UIUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -55,10 +56,10 @@ public class MainFrame extends JFrame {
         infoPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
-        JLabel dateLabel = new JLabel("📅 Tanggal: " + sdf.format(new Date()));
+        JLabel dateLabel = new JLabel("Tanggal: " + sdf.format(new Date()));
         dateLabel.setFont(Style.REGULAR_FONT);
 
-        JLabel userLabel = new JLabel("👤 Kasir: Admin");
+        JLabel userLabel = new JLabel("Kasir: Admin");
         userLabel.setFont(Style.REGULAR_FONT);
 
         infoPanel.add(dateLabel, BorderLayout.WEST);
@@ -88,10 +89,10 @@ public class MainFrame extends JFrame {
         menuPanel.setBackground(Color.WHITE);
         menuPanel.setBorder(new EmptyBorder(30, 50, 30, 50));
 
-        GradientButton btnSales = createMenuButton("Transaksi Penjualan", "🛍️");
-        GradientButton btnItems = createMenuButton("Data Barang", "📦");
-        GradientButton btnReport = createMenuButton("Laporan Penjualan", "📊");
-        GradientButton btnSettings = createMenuButton("Pengaturan", "⚙️");
+        GradientButton btnSales = createMenuButton("Transaksi Penjualan", "cart");
+        GradientButton btnItems = createMenuButton("Data Barang", "box");
+        GradientButton btnReport = createMenuButton("Laporan Penjualan", "report");
+        GradientButton btnSettings = createMenuButton("Pengaturan", "user");
 
         // Add Action Listeners
         btnSales.addActionListener(e -> openSalesTransaction());
@@ -221,10 +222,12 @@ public class MainFrame extends JFrame {
             txtTopProducts.setText(top.toString());
     }
 
-    private GradientButton createMenuButton(String text, String icon) {
-        GradientButton btn = new GradientButton(
-                "<html><center><font size='6'>" + icon + "</font><br><br>" + text + "</center></html>");
+    private GradientButton createMenuButton(String text, String iconType) {
+        GradientButton btn = new GradientButton(text);
         btn.setFont(Style.SUBHEADER_FONT);
+        btn.setIcon(UIUtils.createModernIcon(iconType, Style.BACKGROUND_COLOR, 32));
+        btn.setIconTextGap(15);
+        btn.setHorizontalAlignment(SwingConstants.CENTER);
         return btn;
     }
 

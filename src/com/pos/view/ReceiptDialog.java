@@ -75,9 +75,9 @@ public class ReceiptDialog extends JDialog {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.setBackground(Color.WHITE);
 
-        JButton btnPrint = new SolidButton("🖨️ Cetak Nota", new Color(100, 149, 237)); // Cornflower Blue
-        JButton btnSave = new SolidButton("💾 Simpan PDF", new Color(46, 204, 113)); // Emerald Green
-        JButton btnClose = new SolidButton("⬅ Kembali", new Color(149, 165, 166)); // Gray
+        JButton btnPrint = new SolidButton("Cetak Nota", new Color(100, 149, 237)); // Cornflower Blue
+        JButton btnSave = new SolidButton("Simpan PDF", new Color(46, 204, 113)); // Emerald Green
+        JButton btnClose = new SolidButton("Kembali", new Color(149, 165, 166)); // Gray
 
         btnPrint.setPreferredSize(new Dimension(130, 40));
         btnSave.setPreferredSize(new Dimension(130, 40));
