@@ -1,0 +1,17 @@
+# Database Configuration for POS Application
+# Copy this file to db.properties and modify the settings to enable PostgreSQL support
+# Leave useDb=false to use CSV mode instead
+
+# Enable/disable database mode
+useDb=true
+
+# PostgreSQL connection settings
+url=jdbc:postgresql://localhost:5432/posdb
+user=postgres
+password=
+
+# Notes:
+# 1. Create database: createdb posdb (or run schema.sql in psql)
+# 2. Ensure postgresql-42.7.0.jar is in lib/ directory
+# 3. The application will automatically fall back to CSV mode if connection fails
+# 4. Both DataManager (items) and SalesManager (transactions) support database mode
