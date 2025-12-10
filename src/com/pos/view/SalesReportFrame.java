@@ -36,8 +36,17 @@ public class SalesReportFrame extends JFrame {
         this.mainFrame = mainFrame;
         setTitle("Laporan Penjualan");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(800, 600);
-        setLocationRelativeTo(null);
+        setSize(1000, 700);
+        
+        // Inherit fullscreen state and bounds from MainFrame
+        setExtendedState(mainFrame.getExtendedState());
+        if ((mainFrame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
+            // If parent is fullscreen, match its bounds
+            setBounds(mainFrame.getBounds());
+        } else {
+            setLocationRelativeTo(null);
+        }
+        
         setLayout(new BorderLayout());
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
 
@@ -136,6 +145,10 @@ public class SalesReportFrame extends JFrame {
         JButton btnBack = new SolidButton("Kembali ke Menu Utama", Color.GRAY);
         btnBack.addActionListener(e -> {
             mainFrame.setVisible(true);
+            // Restore parent's fullscreen state if it was fullscreen
+            if ((getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
+                mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            }
             dispose();
         });
         JButton btnExport = new SolidButton("Export ke Excel", new Color(0, 123, 255));

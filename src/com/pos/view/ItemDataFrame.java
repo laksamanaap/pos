@@ -25,8 +25,17 @@ public class ItemDataFrame extends JFrame {
         this.mainFrame = mainFrame;
         setTitle("Manajemen Data Barang");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(900, 750);
-        setLocationRelativeTo(null);
+        setSize(1000, 700);
+        
+        // Inherit fullscreen state and bounds from MainFrame
+        setExtendedState(mainFrame.getExtendedState());
+        if ((mainFrame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
+            // If parent is fullscreen, match its bounds
+            setBounds(mainFrame.getBounds());
+        } else {
+            setLocationRelativeTo(null);
+        }
+        
         setLayout(new BorderLayout());
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
 
@@ -43,9 +52,9 @@ public class ItemDataFrame extends JFrame {
             }
         };
         headerPanel.setOpaque(false);
-        headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        JLabel titleLabel = new JLabel("MANAJEMEN DATA BARANG");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        headerPanel.setBorder(new EmptyBorder(24, 40, 24, 40));
+        JLabel titleLabel = new JLabel("Manajemen Data Barang");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel);
         add(headerPanel, BorderLayout.NORTH);
@@ -54,9 +63,9 @@ public class ItemDataFrame extends JFrame {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBackground(Style.BACKGROUND_COLOR);
-        contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        contentPanel.setBorder(new EmptyBorder(24, 40, 24, 40));
 
-        // Form Panel with modern rounded design
+        // Form Panel with modern design (centered card)
         JPanel formPanel = new JPanel(new GridBagLayout()) {
             @Override
             protected void paintComponent(Graphics g) {
@@ -64,67 +73,123 @@ public class ItemDataFrame extends JFrame {
                 Graphics2D g2 = (Graphics2D) g;
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(Style.SURFACE_COLOR);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 12, 12);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 14, 14);
+                // Subtle shadow
+                g2.setColor(new Color(0, 0, 0, 6));
+                g2.fillRoundRect(2, 2, getWidth()-2, getHeight()-2, 14, 14);
                 g2.setColor(Style.BORDER_COLOR);
-                g2.setStroke(new BasicStroke(1.0f));
-                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 12, 12);
+                g2.setStroke(new BasicStroke(0.8f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 14, 14);
             }
         };
         formPanel.setOpaque(false);
-        formPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        formPanel.setBorder(new EmptyBorder(24, 24, 24, 24));
+        // limit width and center
+        formPanel.setPreferredSize(new Dimension(680, 340));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.insets = new Insets(12, 12, 12, 12);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Row 1
+        // Row 1 - labels aligned right, inputs larger
         gbc.gridx = 0;
         gbc.gridy = 0;
-        formPanel.add(new JLabel("Kode Barang"), gbc);
+        JLabel lbl1 = new JLabel("Kode Barang");
+        lbl1.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl1.setForeground(Style.TEXT_SECONDARY);
+        lbl1.setHorizontalAlignment(SwingConstants.RIGHT);
+        lbl1.setPreferredSize(new Dimension(140, 18));
+        formPanel.add(lbl1, gbc);
+
         gbc.gridx = 1;
-        formPanel.add(new JLabel("Nama Barang"), gbc);
+        JLabel lbl2 = new JLabel("Nama Barang");
+        lbl2.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl2.setForeground(Style.TEXT_SECONDARY);
+        lbl2.setHorizontalAlignment(SwingConstants.RIGHT);
+        lbl2.setPreferredSize(new Dimension(140, 18));
+        formPanel.add(lbl2, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        txtCode = new JTextField(15);
+        txtCode = new JTextField();
+        txtCode.setPreferredSize(new Dimension(260, 34));
+        UIUtils.modernizeTextField(txtCode);
         formPanel.add(txtCode, gbc);
         gbc.gridx = 1;
-        txtName = new JTextField(20);
+        txtName = new JTextField();
+        txtName.setPreferredSize(new Dimension(360, 34));
+        UIUtils.modernizeTextField(txtName);
         formPanel.add(txtName, gbc);
 
         // Row 2
         gbc.gridx = 0;
         gbc.gridy = 2;
-        formPanel.add(new JLabel("Harga Beli (Rp)"), gbc);
+        JLabel lbl3 = new JLabel("Harga Beli (Rp)");
+        lbl3.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl3.setForeground(Style.TEXT_SECONDARY);
+        formPanel.add(lbl3, gbc);
         gbc.gridx = 1;
-        formPanel.add(new JLabel("Harga Jual (Rp)"), gbc);
+        JLabel lbl4 = new JLabel("Harga Jual (Rp)");
+        lbl4.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl4.setForeground(Style.TEXT_SECONDARY);
+        formPanel.add(lbl4, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        txtPurchasePrice = new JTextField(15);
+        txtPurchasePrice = new JTextField();
+        txtPurchasePrice.setPreferredSize(new Dimension(260, 34));
+        UIUtils.modernizeTextField(txtPurchasePrice);
         formPanel.add(txtPurchasePrice, gbc);
         gbc.gridx = 1;
-        txtSellingPrice = new JTextField(15);
+        txtSellingPrice = new JTextField();
+        txtSellingPrice.setPreferredSize(new Dimension(360, 34));
+        UIUtils.modernizeTextField(txtSellingPrice);
         formPanel.add(txtSellingPrice, gbc);
 
         // Row 3
         gbc.gridx = 0;
         gbc.gridy = 4;
-        formPanel.add(new JLabel("Stok"), gbc);
+        JLabel lbl5 = new JLabel("Stok");
+        lbl5.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        lbl5.setForeground(Style.TEXT_SECONDARY);
+        formPanel.add(lbl5, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
-        txtStock = new JTextField(20);
+        txtStock = new JTextField();
+        txtStock.setPreferredSize(new Dimension(120, 34));
+        UIUtils.modernizeTextField(txtStock);
         formPanel.add(txtStock, gbc);
 
         // Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        buttonPanel.setBackground(Color.WHITE);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 8));
+        buttonPanel.setOpaque(false);
 
         JButton btnAdd = createButton("Tambah", Style.PRIMARY_COLOR);
         JButton btnUpdate = createButton("Ubah", Style.WARNING_COLOR);
         JButton btnDelete = createButton("Hapus", Style.DANGER_COLOR);
-        JButton btnReset = createButton("Reset", Color.GRAY);
+        JButton btnReset = createButton("Reset", Style.BORDER_COLOR);
+
+        btnAdd.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        btnUpdate.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        btnDelete.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        btnReset.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+
+        Dimension btnSize = new Dimension(140, 40);
+        btnAdd.setPreferredSize(btnSize);
+        btnUpdate.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(btnSize);
+        btnReset.setPreferredSize(new Dimension(100, 40));
+
+        // Add small icons to buttons
+        btnAdd.setIcon(UIUtils.createModernIcon("add", Style.SURFACE_COLOR, 20));
+        btnUpdate.setIcon(UIUtils.createModernIcon("edit", Style.SURFACE_COLOR, 20));
+        btnDelete.setIcon(UIUtils.createModernIcon("delete", Style.SURFACE_COLOR, 20));
+        btnReset.setIcon(UIUtils.createModernIcon("x", Style.SURFACE_COLOR, 20));
+        btnAdd.setIconTextGap(10);
+        btnUpdate.setIconTextGap(10);
+        btnDelete.setIconTextGap(10);
+        btnReset.setIconTextGap(8);
 
         buttonPanel.add(btnAdd);
         buttonPanel.add(btnUpdate);
@@ -136,7 +201,11 @@ public class ItemDataFrame extends JFrame {
         gbc.gridwidth = 2;
         formPanel.add(buttonPanel, gbc);
 
-        contentPanel.add(formPanel);
+        // center the form card horizontally
+        JPanel centerWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        centerWrap.setOpaque(false);
+        centerWrap.add(formPanel);
+        contentPanel.add(centerWrap);
         contentPanel.add(Box.createVerticalStrut(20));
 
         // Search Panel
@@ -182,6 +251,10 @@ public class ItemDataFrame extends JFrame {
         JButton btnBack = createButton("Kembali ke Menu Utama", Color.GRAY);
         btnBack.addActionListener(e -> {
             mainFrame.setVisible(true);
+            // Restore parent's fullscreen state if it was fullscreen
+            if ((getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
+                mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            }
             dispose();
         });
         footerPanel.add(btnBack);

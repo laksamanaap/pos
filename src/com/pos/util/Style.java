@@ -4,42 +4,42 @@ import java.awt.Color;
 import java.awt.Font;
 
 public class Style {
-    // Modern Fresh Color Palette 2025
-    // Primary: Vibrant Cyan-Blue
-    public static final Color PRIMARY_COLOR = new Color(0, 184, 212); // Cyan (#00B8D4)
+    // Modern Minimal Color Palette - Clean & Sophisticated
+    // Primary: Soft Teal (calming, professional)
+    public static final Color PRIMARY_COLOR = new Color(32, 156, 158); // Soft Teal (#209E9E)
     
-    // Secondary: Electric Purple
-    public static final Color SECONDARY_COLOR = new Color(156, 39, 176); // Deep Purple (#9C27B0)
+    // Secondary: Elegant Slate Blue
+    public static final Color SECONDARY_COLOR = new Color(71, 98, 140); // Slate Blue (#476284)
     
-    // Accent: Hot Pink/Magenta
-    public static final Color ACCENT_COLOR = new Color(233, 30, 99); // Deep Pink (#E91E63)
+    // Accent: Warm Accent
+    public static final Color ACCENT_COLOR = new Color(242, 113, 28); // Warm Orange (#F2711C)
     
-    // Background: Very Light Blue-Gray
-    public static final Color BACKGROUND_COLOR = new Color(240, 248, 255); // Alice Blue (#F0F8FF)
+    // Background: Subtle Light Gray-Blue
+    public static final Color BACKGROUND_COLOR = new Color(248, 249, 250); // Very Light Gray (#F8F9FA)
     
-    // Surface: White
+    // Surface: Clean White
     public static final Color SURFACE_COLOR = new Color(255, 255, 255); // White (#FFFFFF)
     
     // Text Colors
-    public static final Color TEXT_COLOR = new Color(33, 33, 33); // Dark Gray (#212121)
-    public static final Color TEXT_SECONDARY = new Color(117, 117, 117); // Medium Gray (#757575)
+    public static final Color TEXT_COLOR = new Color(45, 52, 64); // Dark Slate (#2D3440)
+    public static final Color TEXT_SECONDARY = new Color(107, 120, 140); // Medium Gray (#6B788C)
     
     // Status Colors
-    public static final Color SUCCESS_COLOR = new Color(76, 175, 80); // Green (#4CAF50)
-    public static final Color WARNING_COLOR = new Color(255, 152, 0); // Orange (#FF9800)
-    public static final Color DANGER_COLOR = new Color(244, 67, 54); // Red (#F44336)
-    public static final Color INFO_COLOR = new Color(0, 188, 212); // Cyan (#00BCD4)
+    public static final Color SUCCESS_COLOR = new Color(72, 180, 97); // Soft Green (#48B461)
+    public static final Color WARNING_COLOR = new Color(242, 113, 28); // Warm Orange (#F2711C)
+    public static final Color DANGER_COLOR = new Color(220, 53, 69); // Soft Red (#DC3545)
+    public static final Color INFO_COLOR = new Color(32, 156, 158); // Soft Teal (#209E9E)
     
-    // Border & Divider
-    public static final Color BORDER_COLOR = new Color(224, 224, 224); // Light Gray (#E0E0E0)
+    // Border & Divider (very subtle)
+    public static final Color BORDER_COLOR = new Color(233, 236, 239); // Almost White (#E9ECEF)
     
-    // Gradients (Fresh & Modern)
-    public static final Color GRADIENT_START = new Color(0, 184, 212); // Cyan (#00B8D4)
-    public static final Color GRADIENT_END = new Color(156, 39, 176); // Deep Purple (#9C27B0)
+    // Gradients (Subtle & Modern)
+    public static final Color GRADIENT_START = new Color(32, 156, 158); // Soft Teal (#209E9E)
+    public static final Color GRADIENT_END = new Color(71, 98, 140); // Slate Blue (#476284)
     
     // Alternative gradient for secondary elements
-    public static final Color GRADIENT_ALT_START = new Color(76, 175, 80); // Green (#4CAF50)
-    public static final Color GRADIENT_ALT_END = new Color(0, 188, 212); // Cyan (#00BCD4)
+    public static final Color GRADIENT_ALT_START = new Color(72, 180, 97); // Soft Green (#48B461)
+    public static final Color GRADIENT_ALT_END = new Color(32, 156, 158); // Soft Teal (#209E9E)
 
     // Fonts (Modern & Clean)
     public static final Font HEADER_FONT = new Font("Segoe UI", Font.BOLD, 28);

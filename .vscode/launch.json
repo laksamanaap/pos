@@ -1,0 +1,24 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+        "type": "java",
+        "name": "App",
+        "request": "launch",
+        "mainClass": "com.pos.App",
+        "projectName": "pos_94e221a6"
+    },
+    {
+        "type": "java",
+        "name": "Launch App (with lib)",
+        "request": "launch",
+        "mainClass": "com.pos.App",
+        "projectName": "pos",
+        "classPaths": [
+            "${workspaceFolder}/bin",
+            "${workspaceFolder}/lib/postgresql-42.7.0.jar"
+        ],
+        "vmArgs": "-Dfile.encoding=UTF-8"
+    }
+]
+}

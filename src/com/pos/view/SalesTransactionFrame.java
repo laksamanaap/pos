@@ -32,8 +32,17 @@ public class SalesTransactionFrame extends JFrame {
         this.mainFrame = mainFrame;
         setTitle("Transaksi Penjualan");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 750);
-        setLocationRelativeTo(null);
+        setSize(1000, 700);
+        
+        // Inherit fullscreen state and bounds from MainFrame
+        setExtendedState(mainFrame.getExtendedState());
+        if ((mainFrame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
+            // If parent is fullscreen, match its bounds
+            setBounds(mainFrame.getBounds());
+        } else {
+            setLocationRelativeTo(null);
+        }
+        
         setLayout(new BorderLayout());
         getContentPane().setBackground(Style.BACKGROUND_COLOR);
 
@@ -50,16 +59,16 @@ public class SalesTransactionFrame extends JFrame {
             }
         };
         headerPanel.setOpaque(false);
-        headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        headerPanel.setBorder(new EmptyBorder(24, 40, 24, 40));
 
-        JLabel titleLabel = new JLabel("TRANSAKSI PENJUALAN");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        JLabel titleLabel = new JLabel("Transaksi Penjualan");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMMM yyyy");
         JLabel dateLabel = new JLabel("Tanggal: " + sdf.format(new Date()));
-        dateLabel.setFont(Style.REGULAR_FONT);
-        dateLabel.setForeground(Color.WHITE);
+        dateLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        dateLabel.setForeground(new Color(235, 240, 242));
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(dateLabel, BorderLayout.EAST);
@@ -247,6 +256,10 @@ public class SalesTransactionFrame extends JFrame {
         JButton btnBack = new SolidButton("Kembali", Color.GRAY);
         btnBack.addActionListener(e -> {
             mainFrame.setVisible(true);
+            // Restore parent's fullscreen state if it was fullscreen
+            if ((getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
+                mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+            }
             dispose();
         });
 

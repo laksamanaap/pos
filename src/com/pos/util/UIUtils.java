@@ -365,4 +365,42 @@ public class UIUtils {
             return result;
         }
     }
+
+    // ============= Input Field Styling =============
+    
+    /**
+     * Apply modern styling to a JTextField
+     */
+    public static void modernizeTextField(JTextField field) {
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        field.setForeground(Style.TEXT_COLOR);
+        field.setBackground(Style.SURFACE_COLOR);
+        field.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)));
+        field.setCaretColor(Style.PRIMARY_COLOR);
+    }
+
+    /**
+     * Apply modern styling to a JTextArea
+     */
+    public static void modernizeTextArea(JTextArea area) {
+        area.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        area.setForeground(Style.TEXT_COLOR);
+        area.setBackground(Style.SURFACE_COLOR);
+        area.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Style.BORDER_COLOR, 1),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)));
+        area.setCaretColor(Style.PRIMARY_COLOR);
+    }
+
+    /**
+     * Apply modern styling to a JComboBox
+     */
+    public static void modernizeComboBox(JComboBox<?> combo) {
+        combo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        combo.setForeground(Style.TEXT_COLOR);
+        combo.setBackground(Style.SURFACE_COLOR);
+        combo.setBorder(BorderFactory.createLineBorder(Style.BORDER_COLOR, 1));
+    }
 }
