@@ -418,14 +418,36 @@ public class SalesReportFrame extends JFrame {
     }
 
     private void exportToExcel() {
-        List<String[]> filtered = getFilteredHistory();
-        if (filtered.isEmpty()) {
+        String mode = cboMode.getSelectedItem().toString();
+        
+        // Check if there's data to export based on current view
+        if (tableModel.getRowCount() == 0) {
             UIUtils.showInfo(this, "Export", "Tidak ada data untuk diekspor.");
             return;
         }
         
+        // Generate filename based on mode and timestamp
+        SimpleDateFormat filenameSdf = new SimpleDateFormat("yyyyMMdd_HHmmss");
+        String timestamp = filenameSdf.format(new Date());
+        String defaultFilename = "";
+        
+        switch (mode) {
+            case "Per Transaksi":
+                defaultFilename = "laporan_transaksi_" + timestamp + ".xlsx";
+                break;
+            case "Per Hari":
+                defaultFilename = "laporan_harian_" + timestamp + ".xlsx";
+                break;
+            case "Per Bulan":
+                defaultFilename = "laporan_bulanan_" + timestamp + ".xlsx";
+                break;
+            case "Per Tahun":
+                defaultFilename = "laporan_tahunan_" + timestamp + ".xlsx";
+                break;
+        }
+        
         JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new java.io.File("sales_report_export.xlsx"));
+        chooser.setSelectedFile(new java.io.File(defaultFilename));
         int option = chooser.showSaveDialog(this);
         if (option != JFileChooser.APPROVE_OPTION) return;
         
@@ -434,158 +456,13 @@ public class SalesReportFrame extends JFrame {
             file = new java.io.File(file.getAbsolutePath() + ".xlsx");
         }
         
-        double grandTotalAmount = 0;
-        double grandTotalProfit = 0;
-        
         try {
             XSSFWorkbook workbook = new XSSFWorkbook();
-            XSSFSheet sheet = workbook.createSheet("Laporan Penjualan");
             
-            // Create styles
-            CellStyle headerStyle = workbook.createCellStyle();
-            XSSFFont headerFont = workbook.createFont();
-            headerFont.setBold(true);
-            headerFont.setFontHeightInPoints((short) 11);
-            headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            headerStyle.setBorderBottom(BorderStyle.THIN);
-            headerStyle.setBorderTop(BorderStyle.THIN);
-            headerStyle.setBorderRight(BorderStyle.THIN);
-            headerStyle.setBorderLeft(BorderStyle.THIN);
-            headerStyle.setAlignment(HorizontalAlignment.CENTER);
-            
-            CellStyle dataStyle = workbook.createCellStyle();
-            dataStyle.setBorderBottom(BorderStyle.THIN);
-            dataStyle.setBorderTop(BorderStyle.THIN);
-            dataStyle.setBorderRight(BorderStyle.THIN);
-            dataStyle.setBorderLeft(BorderStyle.THIN);
-            
-            CellStyle numberStyle = workbook.createCellStyle();
-            numberStyle.cloneStyleFrom(dataStyle);
-            numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
-            
-            CellStyle totalStyle = workbook.createCellStyle();
-            XSSFFont totalFont = workbook.createFont();
-            totalFont.setBold(true);
-            totalStyle.setFont(totalFont);
-            totalStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
-            
-            // Create header row
-            Row headerRow = sheet.createRow(0);
-            String[] headers = {"Transaction ID", "Date", "Time", "Customer", "Cashier", "Total Items", 
-                              "Total Amount", "Profit", "Item Name", "Qty", "Sell Price", "Buy Price", 
-                              "Subtotal", "Subtotal Profit"};
-            
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerStyle);
-            }
-            
-            int rowNum = 1;
-            
-            for (String[] trx : filtered) {
-                String trxId = trx[0];
-                String dateTime = trx[1];
-                String[] dtParts = dateTime.split(" ");
-                String date = dtParts.length > 0 ? dtParts[0] : dateTime;
-                String time = dtParts.length > 1 ? dtParts[1] : "";
-                double totalAmount = 0;
-                try {
-                    totalAmount = Double.parseDouble(trx[2]);
-                } catch (Exception ex) {}
-                
-                List<com.pos.model.SalesDetail> details = com.pos.util.SalesManager.getAllSalesDetails();
-                int totalItems = 0;
-                double profit = 0;
-                List<DetailRow> itemRows = new ArrayList<>();
-                
-                for (com.pos.model.SalesDetail d : details) {
-                    if (d.getTransactionId().equals(trxId)) {
-                        totalItems += d.getQuantity();
-                        double subtotal = d.getQuantity() * d.getSellingPrice();
-                        double itemProfit = (d.getSellingPrice() - d.getPurchasePrice()) * d.getQuantity();
-                        profit += itemProfit;
-                        
-                        com.pos.model.Item item = DataManager.getItemByCode(d.getItemCode());
-                        String itemName = item != null ? item.getName() : d.getItemCode();
-                        
-                        itemRows.add(new DetailRow(itemName, d.getQuantity(), d.getSellingPrice(), 
-                                                  d.getPurchasePrice(), subtotal, itemProfit));
-                    }
-                }
-                
-                grandTotalAmount += totalAmount;
-                grandTotalProfit += profit;
-                
-                // Write transaction header row
-                Row row = sheet.createRow(rowNum++);
-                row.createCell(0).setCellValue(trxId);
-                row.createCell(1).setCellValue(date);
-                row.createCell(2).setCellValue(time);
-                row.createCell(3).setCellValue("Umum");
-                row.createCell(4).setCellValue("");
-                
-                Cell totalItemsCell = row.createCell(5);
-                totalItemsCell.setCellValue(totalItems);
-                totalItemsCell.setCellStyle(numberStyle);
-                
-                Cell totalAmountCell = row.createCell(6);
-                totalAmountCell.setCellValue(totalAmount);
-                totalAmountCell.setCellStyle(numberStyle);
-                
-                Cell profitCell = row.createCell(7);
-                profitCell.setCellValue(profit);
-                profitCell.setCellStyle(numberStyle);
-                
-                // Write item detail rows
-                for (DetailRow dr : itemRows) {
-                    Row itemRow = sheet.createRow(rowNum++);
-                    itemRow.createCell(8).setCellValue(dr.itemName);
-                    
-                    Cell qtyCell = itemRow.createCell(9);
-                    qtyCell.setCellValue(dr.qty);
-                    qtyCell.setCellStyle(numberStyle);
-                    
-                    Cell sellPriceCell = itemRow.createCell(10);
-                    sellPriceCell.setCellValue(dr.sellPrice);
-                    sellPriceCell.setCellStyle(numberStyle);
-                    
-                    Cell buyPriceCell = itemRow.createCell(11);
-                    buyPriceCell.setCellValue(dr.buyPrice);
-                    buyPriceCell.setCellStyle(numberStyle);
-                    
-                    Cell subtotalCell = itemRow.createCell(12);
-                    subtotalCell.setCellValue(dr.subtotal);
-                    subtotalCell.setCellStyle(numberStyle);
-                    
-                    Cell subtotalProfitCell = itemRow.createCell(13);
-                    subtotalProfitCell.setCellValue(dr.subtotalProfit);
-                    subtotalProfitCell.setCellStyle(numberStyle);
-                }
-                
-                // Add empty row between transactions
-                rowNum++;
-            }
-            
-            // Add total rows
-            rowNum++;
-            Row totalAmountRow = sheet.createRow(rowNum++);
-            totalAmountRow.createCell(6).setCellValue("Total Amount:");
-            Cell totalAmountValueCell = totalAmountRow.createCell(7);
-            totalAmountValueCell.setCellValue(grandTotalAmount);
-            totalAmountValueCell.setCellStyle(totalStyle);
-            
-            Row totalProfitRow = sheet.createRow(rowNum++);
-            totalProfitRow.createCell(6).setCellValue("Total Profit:");
-            Cell totalProfitValueCell = totalProfitRow.createCell(7);
-            totalProfitValueCell.setCellValue(grandTotalProfit);
-            totalProfitValueCell.setCellStyle(totalStyle);
-            
-            // Auto-size columns
-            for (int i = 0; i < headers.length; i++) {
-                sheet.autoSizeColumn(i);
+            if (mode.equals("Per Transaksi")) {
+                exportDetailedTransactions(workbook);
+            } else {
+                exportAggregatedData(workbook, mode);
             }
             
             // Write to file
@@ -599,6 +476,313 @@ public class SalesReportFrame extends JFrame {
         } catch (Exception e) {
             e.printStackTrace();
             UIUtils.showError(this, "Error", "Gagal saat ekspor: " + e.getMessage());
+        }
+    }
+
+    private void exportDetailedTransactions(XSSFWorkbook workbook) {
+        XSSFSheet sheet = workbook.createSheet("Laporan Transaksi Detail");
+        
+        // Create styles
+        CellStyle headerStyle = workbook.createCellStyle();
+        XSSFFont headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 11);
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBorderTop(BorderStyle.THIN);
+        headerStyle.setBorderRight(BorderStyle.THIN);
+        headerStyle.setBorderLeft(BorderStyle.THIN);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setBorderBottom(BorderStyle.THIN);
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderRight(BorderStyle.THIN);
+        dataStyle.setBorderLeft(BorderStyle.THIN);
+        
+        CellStyle numberStyle = workbook.createCellStyle();
+        numberStyle.cloneStyleFrom(dataStyle);
+        numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        
+        CellStyle totalStyle = workbook.createCellStyle();
+        XSSFFont totalFont = workbook.createFont();
+        totalFont.setBold(true);
+        totalStyle.setFont(totalFont);
+        totalStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {"No", "Transaction ID", "Date", "Time", "Total Items", 
+                        "Total Amount", "Profit", "Item Name", "Qty", "Sell Price", 
+                        "Buy Price", "Subtotal", "Subtotal Profit"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        int rowNum = 1;
+        double grandTotalAmount = 0;
+        double grandTotalProfit = 0;
+        
+        // Get filtered transactions from current table view
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String trxId = tableModel.getValueAt(i, 1).toString();
+            String dateTime = tableModel.getValueAt(i, 2).toString();
+            String[] dtParts = dateTime.split(" ");
+            String date = dtParts.length > 0 ? dtParts[0] : dateTime;
+            String time = dtParts.length > 1 ? dtParts[1] : "";
+            
+            double totalAmount = Double.parseDouble(tableModel.getValueAt(i, 3).toString().replace(",", ""));
+            double profit = Double.parseDouble(tableModel.getValueAt(i, 4).toString().replace(",", ""));
+            
+            grandTotalAmount += totalAmount;
+            grandTotalProfit += profit;
+            
+            // Get transaction details
+            List<com.pos.model.SalesDetail> details = com.pos.util.SalesManager.getAllSalesDetails();
+            int totalItems = 0;
+            List<DetailRow> itemRows = new ArrayList<>();
+            
+            for (com.pos.model.SalesDetail d : details) {
+                if (d.getTransactionId().equals(trxId)) {
+                    totalItems += d.getQuantity();
+                    double subtotal = d.getQuantity() * d.getSellingPrice();
+                    double itemProfit = (d.getSellingPrice() - d.getPurchasePrice()) * d.getQuantity();
+                    
+                    com.pos.model.Item item = DataManager.getItemByCode(d.getItemCode());
+                    String itemName = item != null ? item.getName() : d.getItemCode();
+                    
+                    itemRows.add(new DetailRow(itemName, d.getQuantity(), d.getSellingPrice(), 
+                                            d.getPurchasePrice(), subtotal, itemProfit));
+                }
+            }
+            
+            // Write transaction header row
+            Row row = sheet.createRow(rowNum++);
+            Cell noCell = row.createCell(0);
+            noCell.setCellValue(i + 1);
+            noCell.setCellStyle(dataStyle);
+            
+            Cell trxIdCell = row.createCell(1);
+            trxIdCell.setCellValue(trxId);
+            trxIdCell.setCellStyle(dataStyle);
+            
+            Cell dateCell = row.createCell(2);
+            dateCell.setCellValue(date);
+            dateCell.setCellStyle(dataStyle);
+            
+            Cell timeCell = row.createCell(3);
+            timeCell.setCellValue(time);
+            timeCell.setCellStyle(dataStyle);
+            
+            Cell totalItemsCell = row.createCell(4);
+            totalItemsCell.setCellValue(totalItems);
+            totalItemsCell.setCellStyle(numberStyle);
+            
+            Cell totalAmountCell = row.createCell(5);
+            totalAmountCell.setCellValue(totalAmount);
+            totalAmountCell.setCellStyle(numberStyle);
+            
+            Cell profitCell = row.createCell(6);
+            profitCell.setCellValue(profit);
+            profitCell.setCellStyle(numberStyle);
+            
+            // Write item detail rows
+            for (DetailRow dr : itemRows) {
+                Row itemRow = sheet.createRow(rowNum++);
+                
+                Cell itemNameCell = itemRow.createCell(7);
+                itemNameCell.setCellValue(dr.itemName);
+                itemNameCell.setCellStyle(dataStyle);
+                
+                Cell qtyCell = itemRow.createCell(8);
+                qtyCell.setCellValue(dr.qty);
+                qtyCell.setCellStyle(numberStyle);
+                
+                Cell sellPriceCell = itemRow.createCell(9);
+                sellPriceCell.setCellValue(dr.sellPrice);
+                sellPriceCell.setCellStyle(numberStyle);
+                
+                Cell buyPriceCell = itemRow.createCell(10);
+                buyPriceCell.setCellValue(dr.buyPrice);
+                buyPriceCell.setCellStyle(numberStyle);
+                
+                Cell subtotalCell = itemRow.createCell(11);
+                subtotalCell.setCellValue(dr.subtotal);
+                subtotalCell.setCellStyle(numberStyle);
+                
+                Cell subtotalProfitCell = itemRow.createCell(12);
+                subtotalProfitCell.setCellValue(dr.subtotalProfit);
+                subtotalProfitCell.setCellStyle(numberStyle);
+            }
+            
+            // Add empty row between transactions
+            rowNum++;
+        }
+        
+        // Add total rows
+        rowNum++;
+        Row totalAmountRow = sheet.createRow(rowNum++);
+        Cell totalAmountLabelCell = totalAmountRow.createCell(5);
+        totalAmountLabelCell.setCellValue("TOTAL AMOUNT:");
+        totalAmountLabelCell.setCellStyle(totalStyle);
+        
+        Cell totalAmountValueCell = totalAmountRow.createCell(6);
+        totalAmountValueCell.setCellValue(grandTotalAmount);
+        totalAmountValueCell.setCellStyle(totalStyle);
+        
+        Row totalProfitRow = sheet.createRow(rowNum++);
+        Cell totalProfitLabelCell = totalProfitRow.createCell(5);
+        totalProfitLabelCell.setCellValue("TOTAL PROFIT:");
+        totalProfitLabelCell.setCellStyle(totalStyle);
+        
+        Cell totalProfitValueCell = totalProfitRow.createCell(6);
+        totalProfitValueCell.setCellValue(grandTotalProfit);
+        totalProfitValueCell.setCellStyle(totalStyle);
+        
+        // Auto-size columns
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
+    }
+
+    private void exportAggregatedData(XSSFWorkbook workbook, String mode) {
+        String sheetName = "";
+        switch (mode) {
+            case "Per Hari":
+                sheetName = "Laporan Harian";
+                break;
+            case "Per Bulan":
+                sheetName = "Laporan Bulanan";
+                break;
+            case "Per Tahun":
+                sheetName = "Laporan Tahunan";
+                break;
+        }
+        
+        XSSFSheet sheet = workbook.createSheet(sheetName);
+        
+        // Create styles
+        CellStyle headerStyle = workbook.createCellStyle();
+        XSSFFont headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 11);
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBorderTop(BorderStyle.THIN);
+        headerStyle.setBorderRight(BorderStyle.THIN);
+        headerStyle.setBorderLeft(BorderStyle.THIN);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setBorderBottom(BorderStyle.THIN);
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderRight(BorderStyle.THIN);
+        dataStyle.setBorderLeft(BorderStyle.THIN);
+        
+        CellStyle numberStyle = workbook.createCellStyle();
+        numberStyle.cloneStyleFrom(dataStyle);
+        numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        
+        CellStyle totalStyle = workbook.createCellStyle();
+        XSSFFont totalFont = workbook.createFont();
+        totalFont.setBold(true);
+        totalStyle.setFont(totalFont);
+        totalStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+        
+        // Create header row
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {"No", "Periode", "Jumlah Transaksi", "Total Penjualan", "Total Laba"};
+        
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        int rowNum = 1;
+        double grandTotalAmount = 0;
+        double grandTotalProfit = 0;
+        int totalTransactions = 0;
+        
+        // Get data from current table view
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            String period = tableModel.getValueAt(i, 1).toString();
+            double totalAmount = Double.parseDouble(tableModel.getValueAt(i, 2).toString().replace(",", ""));
+            double profit = Double.parseDouble(tableModel.getValueAt(i, 3).toString().replace(",", ""));
+            
+            // Count transactions in this period
+            int transactionCount = 0;
+            String periodKey = period.split(" ")[0]; // Get the date part before parentheses
+            
+            for (String[] row : allHistory) {
+                String dateStr = row[1].split(" ")[0];
+                String key = dateStr;
+                if (mode.equals("Per Bulan")) key = dateStr.substring(0, 7);
+                if (mode.equals("Per Tahun")) key = dateStr.substring(0, 4);
+                
+                if (periodKey.equals(key)) {
+                    transactionCount++;
+                }
+            }
+            
+            grandTotalAmount += totalAmount;
+            grandTotalProfit += profit;
+            totalTransactions += transactionCount;
+            
+            // Write data row
+            Row row = sheet.createRow(rowNum++);
+            
+            Cell noCell = row.createCell(0);
+            noCell.setCellValue(i + 1);
+            noCell.setCellStyle(dataStyle);
+            
+            Cell periodCell = row.createCell(1);
+            periodCell.setCellValue(period);
+            periodCell.setCellStyle(dataStyle);
+            
+            Cell countCell = row.createCell(2);
+            countCell.setCellValue(transactionCount);
+            countCell.setCellStyle(numberStyle);
+            
+            Cell totalAmountCell = row.createCell(3);
+            totalAmountCell.setCellValue(totalAmount);
+            totalAmountCell.setCellStyle(numberStyle);
+            
+            Cell profitCell = row.createCell(4);
+            profitCell.setCellValue(profit);
+            profitCell.setCellStyle(numberStyle);
+        }
+        
+        // Add total rows
+        rowNum++;
+        Row totalRow = sheet.createRow(rowNum++);
+        
+        Cell totalLabelCell = totalRow.createCell(1);
+        totalLabelCell.setCellValue("TOTAL");
+        totalLabelCell.setCellStyle(totalStyle);
+        
+        Cell totalTransactionsCell = totalRow.createCell(2);
+        totalTransactionsCell.setCellValue(totalTransactions);
+        totalTransactionsCell.setCellStyle(totalStyle);
+        
+        Cell totalAmountCell = totalRow.createCell(3);
+        totalAmountCell.setCellValue(grandTotalAmount);
+        totalAmountCell.setCellStyle(totalStyle);
+        
+        Cell totalProfitCell = totalRow.createCell(4);
+        totalProfitCell.setCellValue(grandTotalProfit);
+        totalProfitCell.setCellStyle(totalStyle);
+        
+        // Auto-size columns
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
         }
     }
 
