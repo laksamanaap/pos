@@ -28,6 +28,7 @@ public class SalesReportFrame extends JFrame {
     private MainFrame mainFrame;
     private JTable table;
     private DefaultTableModel tableModel;
+    private JComboBox<String> cboMode;
     private JTextField txtStartDate, txtEndDate;
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     private List<String[]> allHistory = new ArrayList<>();
@@ -107,6 +108,11 @@ public class SalesReportFrame extends JFrame {
         JButton btnClear = new SolidButton("Reset", Color.LIGHT_GRAY);
         filterPanel.add(btnFilter);
         filterPanel.add(btnClear);
+
+        filterPanel.add(new JLabel("Mode:"));
+        cboMode = new JComboBox<>(new String[]{"Per Transaksi","Per Hari","Per Bulan","Per Tahun"});
+        cboMode.setSelectedIndex(0);
+        filterPanel.add(cboMode);
 
         txtStartDate = new JTextField(10);
         txtEndDate = new JTextField(10);
@@ -193,45 +199,174 @@ public class SalesReportFrame extends JFrame {
                 if (evt.getClickCount() == 2) {
                     int row = table.getSelectedRow();
                     if (row != -1) {
-                        String trxId = tableModel.getValueAt(row, 1).toString();
-                        showTransactionDetail(trxId);
+                        String mode = cboMode.getSelectedItem().toString();
+                        if (mode.equals("Per Transaksi")) {
+                            String trxId = tableModel.getValueAt(row, 1).toString();
+                            showTransactionDetail(trxId);
+                        } else {
+                            // Aggregated view: first data column is the period label
+                            String period = tableModel.getValueAt(row, 1).toString();
+                            showAggregateDetail(period, mode);
+                        }
                     }
                 }
             }
         });
+
+        cboMode.addActionListener(e -> {
+            // reload data according to selected mode
+            loadData();
+        });
     }
 
     private void loadData() {
-        tableModel.setRowCount(0);
+        String mode = cboMode.getSelectedItem().toString();
         allHistory = SalesManager.getSalesHistory();
-        int no = 1;
-        for (String[] row : allHistory) {
-            double profit = computeProfitForTransaction(row[0]);
-            tableModel.addRow(new Object[] {
-                    no++, row[0], row[1], String.format("%.0f", Double.parseDouble(row[2])), String.format("%.0f", profit)
-            });
+        if (mode.equals("Per Transaksi")) {
+            setTransactionColumns();
+            tableModel.setRowCount(0);
+            int no = 1;
+            for (String[] row : allHistory) {
+                double profit = computeProfitForTransaction(row[0]);
+                tableModel.addRow(new Object[] { no++, row[0], row[1], String.format("%.0f", Double.parseDouble(row[2])), String.format("%.0f", profit) });
+            }
+            updateTotals(allHistory);
+        } else {
+            setAggregateColumns();
+            // group by period
+            java.util.Map<String, AggregateRow> map = new java.util.HashMap<>();
+            SimpleDateFormat sdfLocal = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            for (String[] row : allHistory) {
+                String dateStr = row[1].split(" ")[0]; // yyyy-MM-dd
+                String key = dateStr;
+                if (mode.equals("Per Bulan")) key = dateStr.substring(0, 7); // yyyy-MM
+                if (mode.equals("Per Tahun")) key = dateStr.substring(0, 4); // yyyy
+
+                AggregateRow ar = map.get(key);
+                if (ar == null) {
+                    ar = new AggregateRow(key);
+                    map.put(key, ar);
+                }
+                double amount = 0;
+                try { amount = Double.parseDouble(row[2]); } catch (Exception ex) {}
+                ar.totalAmount += amount;
+                double profit = computeProfitForTransaction(row[0]);
+                ar.totalProfit += profit;
+                ar.transactionIds.add(row[0]);
+            }
+
+            // create sorted list by key descending (latest first)
+            java.util.List<AggregateRow> list = new java.util.ArrayList<>(map.values());
+            list.sort((a, b) -> b.key.compareTo(a.key));
+
+            tableModel.setRowCount(0);
+            int no = 1;
+            for (AggregateRow a : list) {
+                tableModel.addRow(new Object[] { no++, a.getDisplayLabel(mode), String.format("%.0f", a.totalAmount), String.format("%.0f", a.totalProfit) });
+            }
+            updateTotalsAggregated(list);
         }
-        updateTotals(allHistory);
+    }
+
+    private void setTransactionColumns() {
+        String[] columns = { "No", "ID Transaksi", "Tanggal", "Total Penjualan (Rp)", "Laba (Rp)" };
+        tableModel.setColumnIdentifiers(columns);
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(DefaultTableCellRenderer.RIGHT);
+        table.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+        table.getColumnModel().getColumn(4).setCellRenderer(rightRenderer);
+    }
+
+    private void setAggregateColumns() {
+        String[] columns = { "No", "Periode", "Total Penjualan (Rp)", "Laba (Rp)" };
+        tableModel.setColumnIdentifiers(columns);
+        DefaultTableCellRenderer rightRenderer = new DefaultTableCellRenderer();
+        rightRenderer.setHorizontalAlignment(DefaultTableCellRenderer.RIGHT);
+        table.getColumnModel().getColumn(2).setCellRenderer(rightRenderer);
+        table.getColumnModel().getColumn(3).setCellRenderer(rightRenderer);
+    }
+
+    private void updateTotalsAggregated(java.util.List<AggregateRow> list) {
+        double totalAmount = 0;
+        double totalProfit = 0;
+        for (AggregateRow a : list) {
+            totalAmount += a.totalAmount;
+            totalProfit += a.totalProfit;
+        }
+        for (Component c : getContentPane().getComponents()) {
+            if (c instanceof JPanel) {
+                JPanel p = (JPanel) c;
+                for (Component cc : p.getComponents()) {
+                    if (cc instanceof JPanel) {
+                        JPanel inner = (JPanel) cc;
+                        for (Component lab : inner.getComponents()) {
+                            if (lab instanceof JLabel) {
+                                JLabel jl = (JLabel) lab;
+                                if (jl.getText().startsWith("Total Amount")) {
+                                    jl.setText("Total Amount: Rp " + String.format("%.0f", totalAmount));
+                                } else if (jl.getText().startsWith("Total Profit")) {
+                                    jl.setText("Total Profit: Rp " + String.format("%.0f", totalProfit));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private void applyFilter() {
         String start = txtStartDate.getText().trim();
         String end = txtEndDate.getText().trim();
+        String mode = cboMode.getSelectedItem().toString();
         tableModel.setRowCount(0);
-        int no = 1;
-        for (String[] row : allHistory) {
-            try {
-                String dateStr = row[1].split(" ")[0]; // yyyy-MM-dd
-                boolean afterStart = start.isEmpty() || !sdf.parse(dateStr).before(sdf.parse(start));
-                boolean beforeEnd = end.isEmpty() || !sdf.parse(dateStr).after(sdf.parse(end));
-                if (afterStart && beforeEnd) {
-                    double profit = computeProfitForTransaction(row[0]);
-                    tableModel.addRow(new Object[]{no++, row[0], row[1], String.format("%.0f", Double.parseDouble(row[2])), String.format("%.0f", profit)});
+        if (mode.equals("Per Transaksi")) {
+            int no = 1;
+            for (String[] row : allHistory) {
+                try {
+                    String dateStr = row[1].split(" ")[0]; // yyyy-MM-dd
+                    boolean afterStart = start.isEmpty() || !sdf.parse(dateStr).before(sdf.parse(start));
+                    boolean beforeEnd = end.isEmpty() || !sdf.parse(dateStr).after(sdf.parse(end));
+                    if (afterStart && beforeEnd) {
+                        double profit = computeProfitForTransaction(row[0]);
+                        tableModel.addRow(new Object[]{no++, row[0], row[1], String.format("%.0f", Double.parseDouble(row[2])), String.format("%.0f", profit)});
+                    }
+                } catch (ParseException e) {
                 }
-            } catch (ParseException e) {
             }
+            updateTotals(getFilteredHistory());
+        } else {
+            // Aggregated filter
+            java.util.Map<String, AggregateRow> map = new java.util.HashMap<>();
+            for (String[] row : allHistory) {
+                try {
+                    String dateStr = row[1].split(" ")[0];
+                    boolean afterStart = start.isEmpty() || !sdf.parse(dateStr).before(sdf.parse(start));
+                    boolean beforeEnd = end.isEmpty() || !sdf.parse(dateStr).after(sdf.parse(end));
+                    if (!(afterStart && beforeEnd)) continue;
+                    String key = dateStr;
+                    if (mode.equals("Per Bulan")) key = dateStr.substring(0, 7);
+                    if (mode.equals("Per Tahun")) key = dateStr.substring(0, 4);
+
+                    AggregateRow ar = map.get(key);
+                    if (ar == null) { ar = new AggregateRow(key); map.put(key, ar); }
+                    double amount = 0;
+                    try { amount = Double.parseDouble(row[2]); } catch (Exception ex) {}
+                    ar.totalAmount += amount;
+                    double profit = computeProfitForTransaction(row[0]);
+                    ar.totalProfit += profit;
+                    ar.transactionIds.add(row[0]);
+                } catch (Exception e) {}
+            }
+
+            java.util.List<AggregateRow> list = new java.util.ArrayList<>(map.values());
+            list.sort((a, b) -> b.key.compareTo(a.key));
+            int no = 1;
+            for (AggregateRow a : list) {
+                tableModel.addRow(new Object[] { no++, a.getDisplayLabel(mode), String.format("%.0f", a.totalAmount), String.format("%.0f", a.totalProfit) });
+            }
+            updateTotalsAggregated(list);
         }
-        updateTotals(getFilteredHistory());
     }
 
     private void updateTotals(List<String[]> rows) {
@@ -493,5 +628,111 @@ public class SalesReportFrame extends JFrame {
         dialog.pack();
         dialog.setLocationRelativeTo(this);
         dialog.setVisible(true);
+    }
+
+    private void showAggregateDetail(String period, String mode) {
+        // Gather transactions for the selected period
+        java.util.List<String[]> txs = new java.util.ArrayList<>();
+        for (String[] row : allHistory) {
+            String dateStr = row[1].split(" ")[0];
+            String key = dateStr;
+            if (mode.equals("Per Bulan")) key = dateStr.substring(0, 7);
+            if (mode.equals("Per Tahun")) key = dateStr.substring(0, 4);
+            if (period.equals(key) || period.equals(key)) {
+                txs.add(row);
+            } else if (period.equals(key) == false && period.equals(key) == false) {
+                // also allow display label match (e.g., "2025-03 (Maret 2025)")
+                if (period.startsWith(key)) txs.add(row);
+            }
+        }
+
+        String[] cols = { "No", "ID Transaksi", "Tanggal", "Total Penjualan (Rp)", "Laba (Rp)" };
+        DefaultTableModel dm = new DefaultTableModel(cols, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+
+        int no = 1;
+        for (String[] r : txs) {
+            double profit = computeProfitForTransaction(r[0]);
+            dm.addRow(new Object[] { no++, r[0], r[1], String.format("%.0f", Double.parseDouble(r[2])), String.format("%.0f", profit) });
+        }
+
+        JTable t = new JTable(dm);
+        UIUtils.customizeTable(t);
+        t.setRowHeight(28);
+        DefaultTableCellRenderer right = new DefaultTableCellRenderer();
+        right.setHorizontalAlignment(DefaultTableCellRenderer.RIGHT);
+        t.getColumnModel().getColumn(3).setCellRenderer(right);
+        t.getColumnModel().getColumn(4).setCellRenderer(right);
+
+        t.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (evt.getClickCount() == 2) {
+                    int row = t.getSelectedRow();
+                    if (row != -1) {
+                        String trxId = dm.getValueAt(row, 1).toString();
+                        showTransactionDetail(trxId);
+                    }
+                }
+            }
+        });
+
+        JScrollPane sp = new JScrollPane(t);
+        sp.setPreferredSize(new Dimension(760, 340));
+
+        JPanel content = new JPanel(new BorderLayout(12, 12));
+        content.setBackground(Style.SURFACE_COLOR);
+        content.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
+        JLabel lblTitle = new JLabel("Periode: " + period + " (" + mode + ")");
+        lblTitle.setFont(Style.BOLD_FONT);
+        lblTitle.setBorder(new EmptyBorder(6, 6, 6, 6));
+
+        JPanel top = new JPanel(new BorderLayout());
+        top.setOpaque(false);
+        top.add(lblTitle, BorderLayout.WEST);
+
+        content.add(top, BorderLayout.NORTH);
+        content.add(sp, BorderLayout.CENTER);
+
+        JDialog dialog = new JDialog(this, "Detail Periode", true);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        dialog.getContentPane().setBackground(Style.BACKGROUND_COLOR);
+        dialog.setLayout(new BorderLayout());
+        dialog.add(content, BorderLayout.CENTER);
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        actions.setBackground(Style.SURFACE_COLOR);
+        SolidButton btnClose = new SolidButton("Tutup", Style.BORDER_COLOR);
+        btnClose.setPreferredSize(new Dimension(120, 40));
+        btnClose.addActionListener(e -> dialog.dispose());
+        actions.add(btnClose);
+        dialog.add(actions, BorderLayout.SOUTH);
+
+        dialog.pack();
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    private static class AggregateRow {
+        String key;
+        double totalAmount = 0;
+        double totalProfit = 0;
+        java.util.List<String> transactionIds = new java.util.ArrayList<>();
+        AggregateRow(String key) { this.key = key; }
+        String getDisplayLabel(String mode) {
+            if (mode.equals("Per Bulan")) {
+                try {
+                    // convert yyyy-MM to Month Year if possible
+                    java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM");
+                    java.util.Date d = in.parse(key);
+                    java.text.SimpleDateFormat out = new java.text.SimpleDateFormat("MMMM yyyy");
+                    return key + " (" + out.format(d) + ")";
+                } catch (Exception e) {
+                    return key;
+                }
+            }
+            return key;
+        }
     }
 }
