@@ -14,8 +14,17 @@ CREATE TABLE IF NOT EXISTS items (
     name TEXT NOT NULL,
     purchase_price DOUBLE PRECISION NOT NULL,
     selling_price DOUBLE PRECISION NOT NULL,
+    profit_margin DOUBLE PRECISION DEFAULT 20,
     stock INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Profit margin settings table
+CREATE TABLE IF NOT EXISTS profit_margin_settings (
+    id SERIAL PRIMARY KEY,
+    setting_name VARCHAR(255) UNIQUE,
+    default_margin DOUBLE PRECISION DEFAULT 20,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -10,45 +10,50 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * SalesManager supports two modes:
- * - CSV mode (default): uses sales.csv and sales_details.csv for persistence
- * - DB mode: when `db.properties` contains `useDb=true`, uses PostgreSQL via JDBC
+ * SalesManager menggunakan PostgreSQL untuk penyimpanan data transaksi penjualan.
+ * Memerlukan file db.properties dengan konfigurasi database.
  */
 public class SalesManager {
-    private static final String SALES_FILE = "sales.csv";
-    private static final String SALES_DETAILS_FILE = "sales_details.csv";
-
-    // DB configuration
-    private static boolean useDb = false;
     private static String dbUrl;
     private static String dbUser;
     private static String dbPassword;
 
     static {
         loadConfig();
-        if (useDb) {
-            try {
-                Class.forName("org.postgresql.Driver");
-            } catch (ClassNotFoundException e) {
-                System.err.println("WARNING: PostgreSQL JDBC driver not found. Using CSV mode.");
-                useDb = false;
-            }
+        try {
+            Class.forName("org.postgresql.Driver");
+            initializeDatabase();
+        } catch (ClassNotFoundException e) {
+            System.err.println("ERROR: PostgreSQL JDBC driver not found. Please add postgresql JAR to classpath.");
+            System.exit(1);
+        } catch (SQLException e) {
+            System.err.println("ERROR: Failed to initialize sales database: " + e.getMessage());
+            System.exit(1);
         }
     }
 
     private static void loadConfig() {
         File cfg = new File("db.properties");
         Properties p = new Properties();
-        if (cfg.exists()) {
-            try (FileInputStream fis = new FileInputStream(cfg)) {
-                p.load(fis);
-                useDb = Boolean.parseBoolean(p.getProperty("useDb", "false"));
-                dbUrl = p.getProperty("url", "");
-                dbUser = p.getProperty("user", "");
-                dbPassword = p.getProperty("password", "");
-            } catch (IOException e) {
-                System.err.println("Failed to load db.properties: " + e.getMessage());
+        
+        if (!cfg.exists()) {
+            System.err.println("ERROR: db.properties not found. Please create it with database configuration.");
+            System.exit(1);
+        }
+        
+        try (FileInputStream fis = new FileInputStream(cfg)) {
+            p.load(fis);
+            dbUrl = p.getProperty("url");
+            dbUser = p.getProperty("user");
+            dbPassword = p.getProperty("password");
+            
+            if (dbUrl == null || dbUser == null || dbPassword == null) {
+                System.err.println("ERROR: db.properties incomplete. Please set url, user, and password.");
+                System.exit(1);
             }
+        } catch (IOException e) {
+            System.err.println("ERROR: Failed to load db.properties: " + e.getMessage());
+            System.exit(1);
         }
     }
 
@@ -56,15 +61,35 @@ public class SalesManager {
         return DriverManager.getConnection(dbUrl, dbUser, dbPassword);
     }
 
-    public static void saveTransaction(String transactionId, double totalAmount) {
-        if (useDb) {
-            saveTransactionToDb(transactionId, totalAmount);
-        } else {
-            saveTransactionToCsv(transactionId, totalAmount);
+    private static void initializeDatabase() throws SQLException {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
+            // Create sales table
+            stmt.execute("CREATE TABLE IF NOT EXISTS sales (" +
+                    "transaction_id VARCHAR(64) PRIMARY KEY, " +
+                    "transaction_date TIMESTAMP NOT NULL, " +
+                    "total_amount DOUBLE PRECISION NOT NULL, " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP" +
+                    ")");
+            
+            // Create sales_details table
+            stmt.execute("CREATE TABLE IF NOT EXISTS sales_details (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "transaction_id VARCHAR(64) NOT NULL, " +
+                    "item_code VARCHAR(64) NOT NULL, " +
+                    "quantity INTEGER NOT NULL, " +
+                    "purchase_price DOUBLE PRECISION NOT NULL, " +
+                    "selling_price DOUBLE PRECISION NOT NULL, " +
+                    "sales_date VARCHAR(50), " +
+                    "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, " +
+                    "FOREIGN KEY (transaction_id) REFERENCES sales(transaction_id) ON DELETE CASCADE, " +
+                    "FOREIGN KEY (item_code) REFERENCES items(code) ON DELETE RESTRICT" +
+                    ")");
+            
+            System.out.println("✓ Sales tables initialized successfully");
         }
     }
 
-    private static void saveTransactionToDb(String transactionId, double totalAmount) {
+    public static void saveTransaction(String transactionId, double totalAmount) {
         String sql = "INSERT INTO sales (transaction_id, transaction_date, total_amount) VALUES (?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -72,33 +97,14 @@ public class SalesManager {
             stmt.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
             stmt.setDouble(3, totalAmount);
             stmt.executeUpdate();
+            System.out.println("✓ Transaction saved: " + transactionId);
         } catch (SQLException e) {
-            System.err.println("Failed to save transaction to DB: " + e.getMessage());
-            // Fallback to CSV
-            saveTransactionToCsv(transactionId, totalAmount);
-        }
-    }
-
-    private static void saveTransactionToCsv(String transactionId, double totalAmount) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(SALES_FILE, true))) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String date = sdf.format(new Date());
-            bw.write(transactionId + "," + date + "," + totalAmount);
-            bw.newLine();
-        } catch (IOException e) {
+            System.err.println("ERROR: Failed to save transaction: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public static void saveTransactionDetails(List<SalesDetail> details) {
-        if (useDb) {
-            saveTransactionDetailsToDb(details);
-        } else {
-            saveTransactionDetailsToCsv(details);
-        }
-    }
-
-    private static void saveTransactionDetailsToDb(List<SalesDetail> details) {
         String sql = "INSERT INTO sales_details (transaction_id, item_code, quantity, purchase_price, selling_price, sales_date) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -112,38 +118,14 @@ public class SalesManager {
                 stmt.addBatch();
             }
             stmt.executeBatch();
+            System.out.println("✓ " + details.size() + " transaction details saved");
         } catch (SQLException e) {
-            System.err.println("Failed to save transaction details to DB: " + e.getMessage());
-            // Fallback to CSV
-            saveTransactionDetailsToCsv(details);
-        }
-    }
-
-    private static void saveTransactionDetailsToCsv(List<SalesDetail> details) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(SALES_DETAILS_FILE, true))) {
-            for (SalesDetail detail : details) {
-                bw.write(detail.getTransactionId() + "," +
-                        detail.getItemCode() + "," +
-                        detail.getQuantity() + "," +
-                        detail.getPurchasePrice() + "," +
-                        detail.getSellingPrice() + "," +
-                        detail.getDate());
-                bw.newLine();
-            }
-        } catch (IOException e) {
+            System.err.println("ERROR: Failed to save transaction details: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     public static List<String[]> getSalesHistory() {
-        if (useDb) {
-            return getSalesHistoryFromDb();
-        } else {
-            return getSalesHistoryFromCsv();
-        }
-    }
-
-    private static List<String[]> getSalesHistoryFromDb() {
         List<String[]> history = new ArrayList<>();
         String sql = "SELECT transaction_id, transaction_date, total_amount FROM sales ORDER BY transaction_date DESC";
         try (Connection conn = getConnection();
@@ -157,41 +139,13 @@ public class SalesManager {
                 history.add(row);
             }
         } catch (SQLException e) {
-            System.err.println("Failed to load sales history from DB: " + e.getMessage());
-            return getSalesHistoryFromCsv();
-        }
-        return history;
-    }
-
-    private static List<String[]> getSalesHistoryFromCsv() {
-        List<String[]> history = new ArrayList<>();
-        File file = new File(SALES_FILE);
-        if (!file.exists())
-            return history;
-
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",", 3);
-                if (parts.length == 3) {
-                    history.add(parts);
-                }
-            }
-        } catch (IOException e) {
+            System.err.println("ERROR: Failed to load sales history: " + e.getMessage());
             e.printStackTrace();
         }
         return history;
     }
 
     public static List<SalesDetail> getAllSalesDetails() {
-        if (useDb) {
-            return getAllSalesDetailsFromDb();
-        } else {
-            return getAllSalesDetailsFromCsv();
-        }
-    }
-
-    private static List<SalesDetail> getAllSalesDetailsFromDb() {
         List<SalesDetail> details = new ArrayList<>();
         String sql = "SELECT transaction_id, item_code, quantity, purchase_price, selling_price, sales_date FROM sales_details";
         try (Connection conn = getConnection();
@@ -207,33 +161,7 @@ public class SalesManager {
                         rs.getString("sales_date")));
             }
         } catch (SQLException e) {
-            System.err.println("Failed to load sales details from DB: " + e.getMessage());
-            return getAllSalesDetailsFromCsv();
-        }
-        return details;
-    }
-
-    private static List<SalesDetail> getAllSalesDetailsFromCsv() {
-        List<SalesDetail> details = new ArrayList<>();
-        File file = new File(SALES_DETAILS_FILE);
-        if (!file.exists())
-            return details;
-
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 6) {
-                    details.add(new SalesDetail(
-                            parts[0],
-                            parts[1],
-                            Integer.parseInt(parts[2]),
-                            Double.parseDouble(parts[3]),
-                            Double.parseDouble(parts[4]),
-                            parts[5]));
-                }
-            }
-        } catch (IOException e) {
+            System.err.println("ERROR: Failed to load sales details: " + e.getMessage());
             e.printStackTrace();
         }
         return details;

@@ -2,12 +2,15 @@ package com.pos.view;
 
 import com.pos.model.Item;
 import com.pos.util.DataManager;
+import com.pos.util.SettingsManager;
 import com.pos.util.SolidButton;
 import com.pos.util.Style;
 import com.pos.util.UIUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -139,6 +142,21 @@ public class ItemDataFrame extends JFrame {
         txtPurchasePrice = new JTextField();
         txtPurchasePrice.setPreferredSize(new Dimension(260, 34));
         UIUtils.modernizeTextField(txtPurchasePrice);
+        // Add DocumentListener for auto-calculation of selling price
+        txtPurchasePrice.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                calculateSellingPrice();
+            }
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                calculateSellingPrice();
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                calculateSellingPrice();
+            }
+        });
         formPanel.add(txtPurchasePrice, gbc);
         gbc.gridx = 1;
         txtSellingPrice = new JTextField();
@@ -371,5 +389,25 @@ public class ItemDataFrame extends JFrame {
         txtStock.setText("");
         txtCode.setEditable(true);
         table.clearSelection();
+    }
+
+    private void calculateSellingPrice() {
+        try {
+            String purchasePriceStr = txtPurchasePrice.getText().trim();
+            if (purchasePriceStr.isEmpty()) {
+                txtSellingPrice.setText("");
+                return;
+            }
+            
+            double purchasePrice = Double.parseDouble(purchasePriceStr);
+            double profitMargin = SettingsManager.getDefaultProfitMargin();
+            
+            // Calculate selling price: purchasePrice + (purchasePrice * profitMargin / 100)
+            double sellingPrice = purchasePrice * (1 + profitMargin / 100);
+            
+            txtSellingPrice.setText(String.format("%.0f", sellingPrice));
+        } catch (NumberFormatException e) {
+            // Silently ignore invalid input while user is typing
+        }
     }
 }

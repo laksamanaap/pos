@@ -111,7 +111,7 @@ public class MainFrame extends JFrame {
         btnSales.addActionListener(e -> openSalesTransaction());
         btnItems.addActionListener(e -> openItemData());
         btnReport.addActionListener(e -> openSalesReport());
-        btnSettings.addActionListener(e -> UIUtils.showInfo(this, "Pengaturan", "Fitur Pengaturan belum tersedia."));
+        btnSettings.addActionListener(e -> openSettings());
 
         menuPanel.add(btnSales);
         menuPanel.add(btnItems);
@@ -281,6 +281,11 @@ public class MainFrame extends JFrame {
 
     private void openSalesReport() {
         new SalesReportFrame(this).setVisible(true);
+        this.setVisible(false);
+    }
+
+    private void openSettings() {
+        new SettingsFrame(this).setVisible(true);
         this.setVisible(false);
     }
 }
