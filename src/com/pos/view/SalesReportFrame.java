@@ -3,17 +3,25 @@ package com.pos.view;
 import com.pos.util.SalesManager;
 import com.pos.util.SolidButton;
 import com.pos.util.DataManager;
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 import javax.swing.SpinnerDateModel;
 import javax.swing.JSpinner;
-import java.text.DecimalFormat;
 import java.util.Date;
 import com.pos.util.Style;
 import com.pos.util.UIUtils;
+
+// Import Apache POI untuk Excel
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFFont;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -23,6 +31,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.io.FileOutputStream;
 
 public class SalesReportFrame extends JFrame {
     private MainFrame mainFrame;
@@ -42,7 +51,6 @@ public class SalesReportFrame extends JFrame {
         // Inherit fullscreen state and bounds from MainFrame
         setExtendedState(mainFrame.getExtendedState());
         if ((mainFrame.getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
-            // If parent is fullscreen, match its bounds
             setBounds(mainFrame.getBounds());
         } else {
             setLocationRelativeTo(null);
@@ -66,11 +74,10 @@ public class SalesReportFrame extends JFrame {
         headerPanel.setOpaque(false);
         headerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
         JLabel titleLabel = new JLabel("LAPORAN PENJUALAN");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 20));
+        titleLabel.setForeground(java.awt.Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
-
 
         JPanel contentPanel = new JPanel(new BorderLayout());
         contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -105,7 +112,7 @@ public class SalesReportFrame extends JFrame {
         filterPanel.add(endSpinner);
 
         JButton btnFilter = new SolidButton("Terapkan", Style.PRIMARY_COLOR);
-        JButton btnClear = new SolidButton("Reset", Color.LIGHT_GRAY);
+        JButton btnClear = new SolidButton("Reset", java.awt.Color.LIGHT_GRAY);
         filterPanel.add(btnFilter);
         filterPanel.add(btnClear);
 
@@ -148,16 +155,15 @@ public class SalesReportFrame extends JFrame {
 
         JPanel leftActions = new JPanel(new FlowLayout(FlowLayout.LEFT));
         leftActions.setBackground(Style.BACKGROUND_COLOR);
-        JButton btnBack = new SolidButton("Kembali ke Menu Utama", Color.GRAY);
+        JButton btnBack = new SolidButton("Kembali ke Menu Utama", java.awt.Color.GRAY);
         btnBack.addActionListener(e -> {
             mainFrame.setVisible(true);
-            // Restore parent's fullscreen state if it was fullscreen
             if ((getExtendedState() & JFrame.MAXIMIZED_BOTH) == JFrame.MAXIMIZED_BOTH) {
                 mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
             }
             dispose();
         });
-        JButton btnExport = new SolidButton("Export ke Excel", new Color(0, 123, 255));
+        JButton btnExport = new SolidButton("Export ke Excel", new java.awt.Color(0, 123, 255));
         leftActions.add(btnBack);
         leftActions.add(btnExport);
 
@@ -192,7 +198,7 @@ public class SalesReportFrame extends JFrame {
             loadData();
         });
 
-        btnExport.addActionListener(e -> exportToCSV());
+        btnExport.addActionListener(e -> exportToExcel());
 
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -204,7 +210,6 @@ public class SalesReportFrame extends JFrame {
                             String trxId = tableModel.getValueAt(row, 1).toString();
                             showTransactionDetail(trxId);
                         } else {
-                            // Aggregated view: first data column is the period label
                             String period = tableModel.getValueAt(row, 1).toString();
                             showAggregateDetail(period, mode);
                         }
@@ -214,7 +219,6 @@ public class SalesReportFrame extends JFrame {
         });
 
         cboMode.addActionListener(e -> {
-            // reload data according to selected mode
             loadData();
         });
     }
@@ -233,14 +237,13 @@ public class SalesReportFrame extends JFrame {
             updateTotals(allHistory);
         } else {
             setAggregateColumns();
-            // group by period
             java.util.Map<String, AggregateRow> map = new java.util.HashMap<>();
             SimpleDateFormat sdfLocal = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             for (String[] row : allHistory) {
-                String dateStr = row[1].split(" ")[0]; // yyyy-MM-dd
+                String dateStr = row[1].split(" ")[0];
                 String key = dateStr;
-                if (mode.equals("Per Bulan")) key = dateStr.substring(0, 7); // yyyy-MM
-                if (mode.equals("Per Tahun")) key = dateStr.substring(0, 4); // yyyy
+                if (mode.equals("Per Bulan")) key = dateStr.substring(0, 7);
+                if (mode.equals("Per Tahun")) key = dateStr.substring(0, 4);
 
                 AggregateRow ar = map.get(key);
                 if (ar == null) {
@@ -255,7 +258,6 @@ public class SalesReportFrame extends JFrame {
                 ar.transactionIds.add(row[0]);
             }
 
-            // create sorted list by key descending (latest first)
             java.util.List<AggregateRow> list = new java.util.ArrayList<>(map.values());
             list.sort((a, b) -> b.key.compareTo(a.key));
 
@@ -324,7 +326,7 @@ public class SalesReportFrame extends JFrame {
             int no = 1;
             for (String[] row : allHistory) {
                 try {
-                    String dateStr = row[1].split(" ")[0]; // yyyy-MM-dd
+                    String dateStr = row[1].split(" ")[0];
                     boolean afterStart = start.isEmpty() || !sdf.parse(dateStr).before(sdf.parse(start));
                     boolean beforeEnd = end.isEmpty() || !sdf.parse(dateStr).after(sdf.parse(end));
                     if (afterStart && beforeEnd) {
@@ -336,7 +338,6 @@ public class SalesReportFrame extends JFrame {
             }
             updateTotals(getFilteredHistory());
         } else {
-            // Aggregated filter
             java.util.Map<String, AggregateRow> map = new java.util.HashMap<>();
             for (String[] row : allHistory) {
                 try {
@@ -404,7 +405,7 @@ public class SalesReportFrame extends JFrame {
         List<String[]> result = new ArrayList<>();
         for (String[] row : allHistory) {
             try {
-                String dateStr = row[1].split(" ")[0]; // yyyy-MM-dd
+                String dateStr = row[1].split(" ")[0];
                 boolean afterStart = start.isEmpty() || !sdf.parse(dateStr).before(sdf.parse(start));
                 boolean beforeEnd = end.isEmpty() || !sdf.parse(dateStr).after(sdf.parse(end));
                 if (afterStart && beforeEnd) {
@@ -416,7 +417,7 @@ public class SalesReportFrame extends JFrame {
         return result;
     }
 
-    private void exportToCSV() {
+    private void exportToExcel() {
         List<String[]> filtered = getFilteredHistory();
         if (filtered.isEmpty()) {
             UIUtils.showInfo(this, "Export", "Tidak ada data untuk diekspor.");
@@ -424,19 +425,65 @@ public class SalesReportFrame extends JFrame {
         }
         
         JFileChooser chooser = new JFileChooser();
-        chooser.setSelectedFile(new java.io.File("sales_report_export.csv"));
+        chooser.setSelectedFile(new java.io.File("sales_report_export.xlsx"));
         int option = chooser.showSaveDialog(this);
         if (option != JFileChooser.APPROVE_OPTION) return;
         
         java.io.File file = chooser.getSelectedFile();
+        if (!file.getName().endsWith(".xlsx")) {
+            file = new java.io.File(file.getAbsolutePath() + ".xlsx");
+        }
+        
         double grandTotalAmount = 0;
         double grandTotalProfit = 0;
         
-        try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
-            bw.write('\ufeff');
+        try {
+            XSSFWorkbook workbook = new XSSFWorkbook();
+            XSSFSheet sheet = workbook.createSheet("Laporan Penjualan");
             
-            bw.write("Transaction ID;Date;Time;Customer;Cashier;Total Items;Total Amount;Profit;Item Name;Qty;Sell Price;Buy Price;Subtotal;Subtotal Profit");
-            bw.newLine();
+            // Create styles
+            CellStyle headerStyle = workbook.createCellStyle();
+            XSSFFont headerFont = workbook.createFont();
+            headerFont.setBold(true);
+            headerFont.setFontHeightInPoints((short) 11);
+            headerStyle.setFont(headerFont);
+            headerStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.getIndex());
+            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            headerStyle.setBorderBottom(BorderStyle.THIN);
+            headerStyle.setBorderTop(BorderStyle.THIN);
+            headerStyle.setBorderRight(BorderStyle.THIN);
+            headerStyle.setBorderLeft(BorderStyle.THIN);
+            headerStyle.setAlignment(HorizontalAlignment.CENTER);
+            
+            CellStyle dataStyle = workbook.createCellStyle();
+            dataStyle.setBorderBottom(BorderStyle.THIN);
+            dataStyle.setBorderTop(BorderStyle.THIN);
+            dataStyle.setBorderRight(BorderStyle.THIN);
+            dataStyle.setBorderLeft(BorderStyle.THIN);
+            
+            CellStyle numberStyle = workbook.createCellStyle();
+            numberStyle.cloneStyleFrom(dataStyle);
+            numberStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+            
+            CellStyle totalStyle = workbook.createCellStyle();
+            XSSFFont totalFont = workbook.createFont();
+            totalFont.setBold(true);
+            totalStyle.setFont(totalFont);
+            totalStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
+            
+            // Create header row
+            Row headerRow = sheet.createRow(0);
+            String[] headers = {"Transaction ID", "Date", "Time", "Customer", "Cashier", "Total Items", 
+                              "Total Amount", "Profit", "Item Name", "Qty", "Sell Price", "Buy Price", 
+                              "Subtotal", "Subtotal Profit"};
+            
+            for (int i = 0; i < headers.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(headers[i]);
+                cell.setCellStyle(headerStyle);
+            }
+            
+            int rowNum = 1;
             
             for (String[] trx : filtered) {
                 String trxId = trx[0];
@@ -452,7 +499,7 @@ public class SalesReportFrame extends JFrame {
                 List<com.pos.model.SalesDetail> details = com.pos.util.SalesManager.getAllSalesDetails();
                 int totalItems = 0;
                 double profit = 0;
-                List<String[]> itemRows = new ArrayList<>();
+                List<DetailRow> itemRows = new ArrayList<>();
                 
                 for (com.pos.model.SalesDetail d : details) {
                     if (d.getTransactionId().equals(trxId)) {
@@ -464,73 +511,95 @@ public class SalesReportFrame extends JFrame {
                         com.pos.model.Item item = DataManager.getItemByCode(d.getItemCode());
                         String itemName = item != null ? item.getName() : d.getItemCode();
                         
-                        String[] itemRow = new String[14];
-                        itemRow[0] = "";
-                        itemRow[1] = "";
-                        itemRow[2] = "";
-                        itemRow[3] = "";
-                        itemRow[4] = "";
-                        itemRow[5] = "";
-                        itemRow[6] = ""; 
-                        itemRow[7] = "";
-                        itemRow[8] = escapeCSV(itemName);
-                        itemRow[9] = String.valueOf(d.getQuantity());
-                        itemRow[10] = String.format("%.0f", d.getSellingPrice());
-                        itemRow[11] = String.format("%.0f", d.getPurchasePrice());
-                        itemRow[12] = String.format("%.0f", subtotal);
-                        itemRow[13] = String.format("%.0f", itemProfit);
-                        
-                        itemRows.add(itemRow);
+                        itemRows.add(new DetailRow(itemName, d.getQuantity(), d.getSellingPrice(), 
+                                                  d.getPurchasePrice(), subtotal, itemProfit));
                     }
                 }
                 
                 grandTotalAmount += totalAmount;
                 grandTotalProfit += profit;
                 
-                bw.write(escapeCSV(trxId) + ";");
-                bw.write(date + ";");
-                bw.write(time + ";");
-                bw.write("Umum;");
-                bw.write(";");
-                bw.write(totalItems + ";");
-                bw.write(String.format("%.0f", totalAmount) + ";");
-                bw.write(String.format("%.0f", profit) + ";");
-                bw.write(";;;;");
-                bw.newLine();
+                // Write transaction header row
+                Row row = sheet.createRow(rowNum++);
+                row.createCell(0).setCellValue(trxId);
+                row.createCell(1).setCellValue(date);
+                row.createCell(2).setCellValue(time);
+                row.createCell(3).setCellValue("Umum");
+                row.createCell(4).setCellValue("");
                 
-                for (String[] ir : itemRows) {
-                    for (int i = 0; i < ir.length; i++) {
-                        bw.write(ir[i] != null ? ir[i] : "");
-                        if (i < ir.length - 1) bw.write(";");
-                    }
-                    bw.newLine();
+                Cell totalItemsCell = row.createCell(5);
+                totalItemsCell.setCellValue(totalItems);
+                totalItemsCell.setCellStyle(numberStyle);
+                
+                Cell totalAmountCell = row.createCell(6);
+                totalAmountCell.setCellValue(totalAmount);
+                totalAmountCell.setCellStyle(numberStyle);
+                
+                Cell profitCell = row.createCell(7);
+                profitCell.setCellValue(profit);
+                profitCell.setCellStyle(numberStyle);
+                
+                // Write item detail rows
+                for (DetailRow dr : itemRows) {
+                    Row itemRow = sheet.createRow(rowNum++);
+                    itemRow.createCell(8).setCellValue(dr.itemName);
+                    
+                    Cell qtyCell = itemRow.createCell(9);
+                    qtyCell.setCellValue(dr.qty);
+                    qtyCell.setCellStyle(numberStyle);
+                    
+                    Cell sellPriceCell = itemRow.createCell(10);
+                    sellPriceCell.setCellValue(dr.sellPrice);
+                    sellPriceCell.setCellStyle(numberStyle);
+                    
+                    Cell buyPriceCell = itemRow.createCell(11);
+                    buyPriceCell.setCellValue(dr.buyPrice);
+                    buyPriceCell.setCellStyle(numberStyle);
+                    
+                    Cell subtotalCell = itemRow.createCell(12);
+                    subtotalCell.setCellValue(dr.subtotal);
+                    subtotalCell.setCellStyle(numberStyle);
+                    
+                    Cell subtotalProfitCell = itemRow.createCell(13);
+                    subtotalProfitCell.setCellValue(dr.subtotalProfit);
+                    subtotalProfitCell.setCellStyle(numberStyle);
                 }
                 
-                bw.newLine();
+                // Add empty row between transactions
+                rowNum++;
             }
             
-            bw.newLine();
-            bw.write(";;;;;;Total Amount:;" + String.format("%.0f", grandTotalAmount));
-            bw.newLine();
-            bw.write(";;;;;;Total Profit:;" + String.format("%.0f", grandTotalProfit));
-            bw.newLine();
+            // Add total rows
+            rowNum++;
+            Row totalAmountRow = sheet.createRow(rowNum++);
+            totalAmountRow.createCell(6).setCellValue("Total Amount:");
+            Cell totalAmountValueCell = totalAmountRow.createCell(7);
+            totalAmountValueCell.setCellValue(grandTotalAmount);
+            totalAmountValueCell.setCellStyle(totalStyle);
             
-            bw.flush();
+            Row totalProfitRow = sheet.createRow(rowNum++);
+            totalProfitRow.createCell(6).setCellValue("Total Profit:");
+            Cell totalProfitValueCell = totalProfitRow.createCell(7);
+            totalProfitValueCell.setCellValue(grandTotalProfit);
+            totalProfitValueCell.setCellStyle(totalStyle);
+            
+            // Auto-size columns
+            for (int i = 0; i < headers.length; i++) {
+                sheet.autoSizeColumn(i);
+            }
+            
+            // Write to file
+            FileOutputStream outputStream = new FileOutputStream(file);
+            workbook.write(outputStream);
+            workbook.close();
+            outputStream.close();
+            
             UIUtils.showInfo(this, "Export", "Export selesai: " + file.getAbsolutePath());
             
         } catch (Exception e) {
             e.printStackTrace();
             UIUtils.showError(this, "Error", "Gagal saat ekspor: " + e.getMessage());
         }
-    }
-
-    private String escapeCSV(String value) {
-        if (value == null) return "";
-        if (value.contains(";") || value.contains("\"") || value.contains("\n")) {
-            value = value.replace("\"", "\"\""); // Escape quotes
-            return "\"" + value + "\"";
-        }
-        return value;
     }
 
     private double computeProfitForTransaction(String trxId) {
@@ -547,7 +616,6 @@ public class SalesReportFrame extends JFrame {
     private void showTransactionDetail(String trxId) {
         List<com.pos.model.SalesDetail> details = com.pos.util.SalesManager.getAllSalesDetails();
 
-        // Table columns for detail view
         String[] cols = { "No", "Kode", "Nama", "Qty", "Harga (Rp)", "Subtotal (Rp)", "Laba (Rp)" };
         DefaultTableModel dm = new DefaultTableModel(cols, 0) {
             @Override
@@ -580,7 +648,6 @@ public class SalesReportFrame extends JFrame {
 
         DefaultTableCellRenderer right = new DefaultTableCellRenderer();
         right.setHorizontalAlignment(DefaultTableCellRenderer.RIGHT);
-        // Align numeric columns (Qty, Harga, Subtotal, Laba)
         detailTable.getColumnModel().getColumn(3).setCellRenderer(right);
         detailTable.getColumnModel().getColumn(4).setCellRenderer(right);
         detailTable.getColumnModel().getColumn(5).setCellRenderer(right);
@@ -631,7 +698,6 @@ public class SalesReportFrame extends JFrame {
     }
 
     private void showAggregateDetail(String period, String mode) {
-        // Gather transactions for the selected period
         java.util.List<String[]> txs = new java.util.ArrayList<>();
         for (String[] row : allHistory) {
             String dateStr = row[1].split(" ")[0];
@@ -641,7 +707,6 @@ public class SalesReportFrame extends JFrame {
             if (period.equals(key) || period.equals(key)) {
                 txs.add(row);
             } else if (period.equals(key) == false && period.equals(key) == false) {
-                // also allow display label match (e.g., "2025-03 (Maret 2025)")
                 if (period.startsWith(key)) txs.add(row);
             }
         }
@@ -723,7 +788,6 @@ public class SalesReportFrame extends JFrame {
         String getDisplayLabel(String mode) {
             if (mode.equals("Per Bulan")) {
                 try {
-                    // convert yyyy-MM to Month Year if possible
                     java.text.SimpleDateFormat in = new java.text.SimpleDateFormat("yyyy-MM");
                     java.util.Date d = in.parse(key);
                     java.text.SimpleDateFormat out = new java.text.SimpleDateFormat("MMMM yyyy");
@@ -733,6 +797,24 @@ public class SalesReportFrame extends JFrame {
                 }
             }
             return key;
+        }
+    }
+    
+    private static class DetailRow {
+        String itemName;
+        int qty;
+        double sellPrice;
+        double buyPrice;
+        double subtotal;
+        double subtotalProfit;
+        
+        DetailRow(String itemName, int qty, double sellPrice, double buyPrice, double subtotal, double subtotalProfit) {
+            this.itemName = itemName;
+            this.qty = qty;
+            this.sellPrice = sellPrice;
+            this.buyPrice = buyPrice;
+            this.subtotal = subtotal;
+            this.subtotalProfit = subtotalProfit;
         }
     }
 }

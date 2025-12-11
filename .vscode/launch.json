@@ -6,7 +6,12 @@
         "name": "App",
         "request": "launch",
         "mainClass": "com.pos.App",
-        "projectName": "pos_94e221a6"
+        "projectName": "pos_94e221a6",
+        "classPaths": [
+            "${workspaceFolder}/bin",
+            "${workspaceFolder}/lib/*"
+        ],
+        "vmArgs": "-Dfile.encoding=UTF-8"
     },
     {
         "type": "java",
@@ -16,7 +21,7 @@
         "projectName": "pos",
         "classPaths": [
             "${workspaceFolder}/bin",
-            "${workspaceFolder}/lib/postgresql-42.7.0.jar"
+            "${workspaceFolder}/lib/*"
         ],
         "vmArgs": "-Dfile.encoding=UTF-8"
     }
